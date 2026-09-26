@@ -1,0 +1,59 @@
+.textoSecundario {
+  color: #d3d3d3;
+}
+
+.filaContacto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.columnaDatosEmpresa {
+  flex: 1 1 320px;
+}
+
+.columnaFormulario {
+  flex: 1 1 400px;
+}
+
+.logoContacto {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 15px;
+}
+
+.nombreEmpresa {
+  font-family: "Orbitron", sans-serif;
+  color: #ffffff;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.listaDatosContacto {
+  margin-top: 25px;
+  color: #d3d3d3;
+}
+
+.listaDatosContacto li {
+  margin-bottom: 10px;
+}
+
+.tituloFormulario {
+  font-family: "Orbitron", sans-serif;
+  color: #ffffff;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+.botonEnviarContacto {
+  background-color: transparent;
+  color: #39ff14;
+  border: 1px solid #39ff14;
+  font-weight: 500;
+}
+
+.botonEnviarContacto:hover {
+  background-color: #39ff14;
+  color: #000000;
+}

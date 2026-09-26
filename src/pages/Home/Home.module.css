@@ -1,0 +1,39 @@
+.botonAgregar {
+  background-color: transparent;
+  color: #39ff14;
+  border: 1px solid #39ff14;
+  border-radius: 6px;
+}
+
+.botonAgregar:hover {
+  background-color: #39ff14;
+  color: #212529;
+}
+
+.textoNeonVerde {
+  color: #39ff14;
+}
+
+.tituloNosotros {
+  font-family: "Orbitron", sans-serif;
+  color: #ffffff;
+  font-size: 2rem;
+  letter-spacing: 1px;
+}
+
+.subtituloNosotros {
+  font-family: "Orbitron", sans-serif;
+  font-size: 1.2rem;
+}
+
+.textoNosotros {
+  color: #d3d3d3;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+.tarjetaMisionVision {
+  background-color: #212529;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: border-color 0.2s ease;
+}

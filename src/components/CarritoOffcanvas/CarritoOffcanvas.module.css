@@ -1,0 +1,29 @@
+.panelCarritoGamer {
+  background-color: #0d0d0d !important;
+  border-left: 1px solid #39ff14;
+  color: #ffffff;
+}
+
+.tituloCarrito {
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.textoNeonVerde {
+  color: #39ff14;
+  font-weight: bold;
+}
+
+.botonBuscarNeon {
+  color: #39ff14;
+  border: 1px solid #39ff14;
+  background-color: transparent;
+  font-weight: 500;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.botonBuscarNeon:hover {
+  background-color: #39ff14;
+  color: #000000;
+}

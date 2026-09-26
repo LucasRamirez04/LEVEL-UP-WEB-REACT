@@ -1,0 +1,26 @@
+.piePaginaGamer {
+  background-color: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tituloPie {
+  font-family: "Orbitron", sans-serif;
+  color: #ffffff;
+  letter-spacing: 1px;
+  font-size: 0.95rem;
+}
+
+.textoPie {
+  color: #d3d3d3;
+  font-size: 0.875rem;
+}
+
+.enlacePie {
+  color: #d3d3d3 !important;
+  font-size: 0.875rem;
+  transition: color 0.15s ease-in-out;
+}
+
+.enlacePie:hover {
+  color: #39ff14 !important;
+}

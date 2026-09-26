@@ -1,0 +1,56 @@
+.barraNavegacionGamer {
+  background-color: #000000 !important;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.logoNavbar {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}
+
+.enlaceMenu {
+  color: #d3d3d3 !important;
+  transition: color 0.15s ease-in-out;
+}
+
+.enlaceMenu:hover,
+.enlaceMenu.active {
+  color: #39ff14 !important;
+}
+
+.enlaceLogin {
+  color: #39ff14 !important;
+  border: 1px solid #39ff14;
+  border-radius: 6px;
+  padding: 6px 14px !important;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.enlaceLogin:hover {
+  background-color: #39ff14;
+  color: #000000 !important;
+}
+
+.botonCarritoNav {
+  background-color: transparent;
+  color: #d3d3d3;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.95rem;
+  border-radius: 6px;
+  padding: 6px 12px;
+  transition: border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.botonCarritoNav:hover {
+  color: #39ff14;
+  border-color: #39ff14;
+}
+
+.badgeContador {
+  background-color: #39ff14;
+  color: #000000;
+  font-weight: bold;
+  font-size: 0.75rem;
+  border-radius: 50%;
+}

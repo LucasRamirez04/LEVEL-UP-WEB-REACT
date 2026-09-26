@@ -1,0 +1,11 @@
+.btnOutlineLight {
+  color: #d3d3d3;
+  border: 1px solid #d3d3d3;
+  background-color: transparent;
+}
+
+.btnOutlineLight:hover {
+  background-color: #39ff14;
+  border-color: #39ff14;
+  color: #000000;
+}

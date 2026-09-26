@@ -1,0 +1,26 @@
+/* ===================================================
+   ESTILOS GLOBALES DEL SITIO (equivalente a css/global.css)
+   =================================================== */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background-color: #000000;
+  font-family: "Roboto", sans-serif;
+  color: #ffffff;
+}
+
+/* Compensa la altura del navbar fixed-top en TODAS las páginas */
+.contenedor-principal {
+  padding-top: 85px;
+}
+
+/* Utilidades de color reutilizadas en varias páginas */
+.texto-neon-verde {
+  color: #39ff14;
+}
+
+.texto-secundario {
+  color: #d3d3d3;
+}

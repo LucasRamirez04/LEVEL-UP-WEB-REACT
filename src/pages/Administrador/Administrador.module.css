@@ -1,0 +1,16 @@
+.pestanaGamer {
+  color: #a0a0a0;
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.pestanaGamer:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pestanaGamer:global(.active) {
+  color: #39ff14 !important;
+  background-color: #212529 !important;
+  border-color: #39ff14 #39ff14 transparent #39ff14 !important;
+}

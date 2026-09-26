@@ -1,0 +1,16 @@
+.tarjetaBlog {
+  background-color: #111111;
+  border: 1px solid #1e90ff;
+  border-radius: 8px;
+}
+
+.btnCaso {
+  background-color: #1e90ff;
+  color: #ffffff;
+  border: none;
+}
+
+.btnCaso:hover {
+  background-color: #39ff14;
+  color: #000000;
+}
