@@ -1,6 +1,5 @@
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { useCarrito } from "../../context/CarritoContext";
-import { useUsuarios } from "../../context/UsuariosContext";
 import styles from "./Navbar.module.css";
 
 function claseEnlace({ isActive }) {
@@ -8,8 +7,34 @@ function claseEnlace({ isActive }) {
 }
 
 export default function Navbar() {
-  const { carrito } = useCarrito();
-  const { usuarioActivo, cerrarSesion } = useUsuarios();
+  const [usuarioActivo, setUsuarioActivo] = useState(null);
+  const [cantidadCarrito, setCantidadCarrito] = useState(0);
+
+  const sincronizarDatos = () => {
+    // 1. Obtiene usuario de localStorage
+    const usuarioGuardado = JSON.parse(localStorage.getItem("usuarioActivo"));
+    setUsuarioActivo(usuarioGuardado || null);
+
+    // 2. Obtiene productos del carrito de localStorage
+    const carritoGuardado = JSON.parse(localStorage.getItem("carrito")) || [];
+    setCantidadCarrito(carritoGuardado.length);
+  };
+
+  useEffect(() => {
+    sincronizarDatos();
+
+    // Escucha el evento global emitido al agregar o vaciar el carrito
+    window.addEventListener("storage", sincronizarDatos);
+    return () => {
+      window.removeEventListener("storage", sincronizarDatos);
+    };
+  }, []);
+
+  const cerrarSesion = () => {
+    localStorage.removeItem("usuarioActivo");
+    setUsuarioActivo(null);
+    window.location.reload();
+  };
 
   return (
     <header className="cabecera-principal">
@@ -102,7 +127,7 @@ export default function Navbar() {
                 >
                   <i className="bi bi-cart3"></i>
                   <span>Carrito</span>
-                  <span className={`badge ${styles.badgeContador}`}>{carrito.length}</span>
+                  <span className={`badge ${styles.badgeContador}`}>{cantidadCarrito}</span>
                 </button>
               </li>
             </ul>

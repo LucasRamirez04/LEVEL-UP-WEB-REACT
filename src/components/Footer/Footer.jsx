@@ -25,13 +25,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link to="/#sec-ofertas" className={`nav-link p-0 ${styles.enlacePie}`}>
-                  <i className="bi bi-chevron-right text-success me-1"></i>Ofertas Destacadas
+                <Link to="/productos" className={`nav-link p-0 ${styles.enlacePie}`}>
+                  <i className="bi bi-chevron-right text-success me-1"></i>Nuestros Productos
                 </Link>
               </li>
               <li className="nav-item">
-                <Link to="/#nosotros" className={`nav-link p-0 ${styles.enlacePie}`}>
-                  <i className="bi bi-chevron-right text-success me-1"></i>Sobre Nosotros
+                <Link to="/contacto" className={`nav-link p-0 ${styles.enlacePie}`}>
+                  <i className="bi bi-chevron-right text-success me-1"></i>Contactanos
                 </Link>
               </li>
             </ul>

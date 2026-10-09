@@ -1,9 +1,44 @@
-import { useCarrito } from "../../context/CarritoContext";
+import { useState, useEffect } from "react";
 import { formatearPrecio } from "../../data/productos";
 import styles from "./CarritoOffcanvas.module.css";
 
 export default function CarritoOffcanvas() {
-  const { carrito, total, eliminarDelCarrito, vaciarCarrito } = useCarrito();
+  const [carrito, setCarrito] = useState([]);
+
+  // Carga inicial del carrito desde localStorage
+  const cargarCarrito = () => {
+    const dataGuardada = JSON.parse(localStorage.getItem("carrito")) || [];
+    setCarrito(dataGuardada);
+  };
+
+  useEffect(() => {
+    cargarCarrito();
+
+    // Escucha cambios manuales o aperturas del offcanvas para sincronizar
+    const elementoOffcanvas = document.getElementById("carritoCompras");
+    if (elementoOffcanvas) {
+      elementoOffcanvas.addEventListener("show.bs.offcanvas", cargarCarrito);
+    }
+
+    return () => {
+      if (elementoOffcanvas) {
+        elementoOffcanvas.removeEventListener("show.bs.offcanvas", cargarCarrito);
+      }
+    };
+  }, []);
+
+  const total = carrito.reduce((acc, item) => acc + (Number(item.precio) || 0), 0);
+
+  const eliminarDelCarrito = (indiceABorrar) => {
+    const nuevoCarrito = carrito.filter((_, index) => index !== indiceABorrar);
+    setCarrito(nuevoCarrito);
+    localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+  };
+
+  const vaciarCarrito = () => {
+    setCarrito([]);
+    localStorage.removeItem("carrito");
+  };
 
   return (
     <div
