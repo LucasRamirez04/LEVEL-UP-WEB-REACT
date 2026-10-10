@@ -1,4 +1,7 @@
 import { useState } from "react";
+import Navbar from "../../components/Navbar/Navbar";
+import Footer from "../../components/Footer/Footer";
+import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import styles from "./Contacto.module.css";
 
 const DOMINIOS_PERMITIDOS = ["@duoc.cl", "@profesor.duoc.cl", "@gmail.com"];
@@ -71,122 +74,131 @@ export default function Contacto() {
   }
 
   return (
-    <div className="container py-5">
-      <div className={styles.filaContacto}>
-        <section className={styles.columnaDatosEmpresa}>
-          <img src="/img/LOGO.png" alt="Logo Level-Up Gamer" className={styles.logoContacto} />
-          <h1 className={styles.nombreEmpresa}>Level-Up Gamer</h1>
-          <p className={styles.textoSecundario}>
-            Tienda online de tecnología y accesorios gamer. Sin sucursales físicas, despacho a
-            todo Chile.
-          </p>
-          <ul className={`list-unstyled ${styles.listaDatosContacto}`}>
-            <li>
-              <i className="bi bi-envelope me-2" style={{ color: "#39FF14" }}></i>
-              contacto@levelupgamer.cl
-            </li>
-            <li>
-              <i className="bi bi-telephone me-2" style={{ color: "#39FF14" }}></i>
-              +56 9 0000 0000
-            </li>
-            <li>
-              <i className="bi bi-truck me-2" style={{ color: "#39FF14" }}></i>
-              Despacho a todo Chile (sin tienda física)
-            </li>
-          </ul>
-        </section>
+    <>
+      <Navbar />
+      <CarritoOffcanvas />
 
-        <section className={styles.columnaFormulario}>
-          <h2 className={styles.tituloFormulario}>Escríbenos</h2>
+      <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
+        <div className="container py-5">
+          <div className={styles.filaContacto}>
+            <section className={styles.columnaDatosEmpresa}>
+              <img src="/img/LOGO.png" alt="Logo Level-Up Gamer" className={styles.logoContacto} />
+              <h1 className={styles.nombreEmpresa}>Level-Up Gamer</h1>
+              <p className={styles.textoSecundario}>
+                Tienda online de tecnología y accesorios gamer. Sin sucursales físicas, despacho a
+                todo Chile.
+              </p>
+              <ul className={`list-unstyled ${styles.listaDatosContacto}`}>
+                <li>
+                  <i className="bi bi-envelope me-2" style={{ color: "#39FF14" }}></i>
+                  contacto@levelupgamer.cl
+                </li>
+                <li>
+                  <i className="bi bi-telephone me-2" style={{ color: "#39FF14" }}></i>
+                  +56 9 0000 0000
+                </li>
+                <li>
+                  <i className="bi bi-truck me-2" style={{ color: "#39FF14" }}></i>
+                  Despacho a todo Chile (sin tienda física)
+                </li>
+              </ul>
+            </section>
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="mb-3">
-              <label htmlFor="campo-nombre" className="form-label">
-                Nombre completo
-              </label>
-              <input
-                type="text"
-                className={claseCampo("nombre")}
-                id="campo-nombre"
-                maxLength={100}
-                value={nombre}
-                onChange={(e) => {
-                  setNombre(e.target.value);
-                  if (tocado.nombre)
-                    setErrores((er) => ({ ...er, nombre: validarNombre(e.target.value) }));
-                }}
-                onBlur={() => {
-                  setTocado((t) => ({ ...t, nombre: true }));
-                  setErrores((er) => ({ ...er, nombre: validarNombre(nombre) }));
-                }}
-              />
-              <div className="invalid-feedback">{errores.nombre}</div>
-            </div>
+            <section className={styles.columnaFormulario}>
+              <h2 className={styles.tituloFormulario}>Escríbenos</h2>
 
-            <div className="mb-3">
-              <label htmlFor="campo-correo" className="form-label">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                className={claseCampo("correo")}
-                id="campo-correo"
-                maxLength={100}
-                value={correo}
-                onChange={(e) => {
-                  setCorreo(e.target.value);
-                  if (tocado.correo)
-                    setErrores((er) => ({ ...er, correo: validarCorreo(e.target.value) }));
-                }}
-                onBlur={() => {
-                  setTocado((t) => ({ ...t, correo: true }));
-                  setErrores((er) => ({ ...er, correo: validarCorreo(correo) }));
-                }}
-              />
-              <div className={`form-text ${styles.textoSecundario}`}>
-                Solo se aceptan correos @duoc.cl, @profesor.duoc.cl o @gmail.com
-              </div>
-              <div className="invalid-feedback">{errores.correo}</div>
-            </div>
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="mb-3">
+                  <label htmlFor="campo-nombre" className="form-label">
+                    Nombre completo
+                  </label>
+                  <input
+                    type="text"
+                    className={claseCampo("nombre")}
+                    id="campo-nombre"
+                    maxLength={100}
+                    value={nombre}
+                    onChange={(e) => {
+                      setNombre(e.target.value);
+                      if (tocado.nombre)
+                        setErrores((er) => ({ ...er, nombre: validarNombre(e.target.value) }));
+                    }}
+                    onBlur={() => {
+                      setTocado((t) => ({ ...t, nombre: true }));
+                      setErrores((er) => ({ ...er, nombre: validarNombre(nombre) }));
+                    }}
+                  />
+                  <div className="invalid-feedback">{errores.nombre}</div>
+                </div>
 
-            <div className="mb-3">
-              <label htmlFor="campo-mensaje" className="form-label">
-                Mensaje
-              </label>
-              <textarea
-                className={claseCampo("mensaje")}
-                id="campo-mensaje"
-                rows={5}
-                maxLength={500}
-                value={mensaje}
-                onChange={(e) => {
-                  setMensaje(e.target.value);
-                  if (tocado.mensaje)
-                    setErrores((er) => ({ ...er, mensaje: validarMensaje(e.target.value) }));
-                }}
-                onBlur={() => {
-                  setTocado((t) => ({ ...t, mensaje: true }));
-                  setErrores((er) => ({ ...er, mensaje: validarMensaje(mensaje) }));
-                }}
-              ></textarea>
-              <div className={`form-text ${styles.textoSecundario}`}>
-                <span>{mensaje.length}</span>/500 caracteres
-              </div>
-              <div className="invalid-feedback">{errores.mensaje}</div>
-            </div>
+                <div className="mb-3">
+                  <label htmlFor="campo-correo" className="form-label">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    className={claseCampo("correo")}
+                    id="campo-correo"
+                    maxLength={100}
+                    value={correo}
+                    onChange={(e) => {
+                      setCorreo(e.target.value);
+                      if (tocado.correo)
+                        setErrores((er) => ({ ...er, correo: validarCorreo(e.target.value) }));
+                    }}
+                    onBlur={() => {
+                      setTocado((t) => ({ ...t, correo: true }));
+                      setErrores((er) => ({ ...er, correo: validarCorreo(correo) }));
+                    }}
+                  />
+                  <div className={`form-text ${styles.textoSecundario}`}>
+                    Solo se aceptan correos @duoc.cl, @profesor.duoc.cl o @gmail.com
+                  </div>
+                  <div className="invalid-feedback">{errores.correo}</div>
+                </div>
 
-            <button type="submit" className={`btn ${styles.botonEnviarContacto}`}>
-              Enviar mensaje
-            </button>
+                <div className="mb-3">
+                  <label htmlFor="campo-mensaje" className="form-label">
+                    Mensaje
+                  </label>
+                  <textarea
+                    className={claseCampo("mensaje")}
+                    id="campo-mensaje"
+                    rows={5}
+                    maxLength={500}
+                    value={mensaje}
+                    onChange={(e) => {
+                      setMensaje(e.target.value);
+                      if (tocado.mensaje)
+                        setErrores((er) => ({ ...er, mensaje: validarMensaje(e.target.value) }));
+                    }}
+                    onBlur={() => {
+                      setTocado((t) => ({ ...t, mensaje: true }));
+                      setErrores((er) => ({ ...er, mensaje: validarMensaje(mensaje) }));
+                    }}
+                  ></textarea>
+                  <div className={`form-text ${styles.textoSecundario}`}>
+                    <span>{mensaje.length}</span>/500 caracteres
+                  </div>
+                  <div className="invalid-feedback">{errores.mensaje}</div>
+                </div>
 
-            {exito && (
-              <div className="alert alert-success mt-3" role="alert">
-                ¡Mensaje enviado! Te responderemos a la brevedad.
-              </div>
-            )}
-          </form>
-        </section>
-      </div>
-    </div>
+                <button type="submit" className={`btn ${styles.botonEnviarContacto}`}>
+                  Enviar mensaje
+                </button>
+
+                {exito && (
+                  <div className="alert alert-success mt-3" role="alert">
+                    ¡Mensaje enviado! Te responderemos a la brevedad.
+                  </div>
+                )}
+              </form>
+            </section>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </>
   );
 }
