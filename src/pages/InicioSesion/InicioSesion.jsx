@@ -1,30 +1,50 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useUsuarios } from "../../context/UsuariosContext";
+import Navbar from "../../components/Navbar/Navbar";
+import Footer from "../../components/Footer/Footer";
+import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
+import { usuarioAdminInicial } from "../../data/productos";
 import styles from "./InicioSesion.module.css";
 
 export default function InicioSesion() {
   const [correo, setCorreo] = useState("");
   const [clave, setClave] = useState("");
-  const { iniciarSesion } = useUsuarios();
   const navigate = useNavigate();
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    if (correo === "") {
+    const correoLimpio = correo.trim().toLowerCase();
+    const claveLimpia = clave.trim();
+
+    if (!correoLimpio) {
       alert("El correo es requerido.");
       return;
     }
-    if (clave === "") {
+    if (!claveLimpia) {
       alert("La contraseña es requerida.");
       return;
     }
 
-    const usuario = iniciarSesion(correo, clave);
+    // 1. Obtiene usuarios registrados de localStorage o el admin por defecto
+    const usuariosRegistrados =
+      JSON.parse(localStorage.getItem("usuarios")) || usuarioAdminInicial;
 
-    if (usuario) {
-      alert("¡Bienvenido " + usuario.nombre + "!");
+    // 2. Busca coincidencia de correo y clave
+    const usuarioEncontrado = usuariosRegistrados.find(
+      (u) =>
+        u.correo.toLowerCase() === correoLimpio &&
+        (u.clave ? u.clave === claveLimpia : true)
+    );
+
+    if (usuarioEncontrado) {
+      // 3. Guarda la sesión activa en localStorage
+      localStorage.setItem("usuarioActivo", JSON.stringify(usuarioEncontrado));
+
+      // 4. Notifica al Navbar para actualizar nombre y botón de salida
+      window.dispatchEvent(new Event("storage"));
+
+      alert("¡Bienvenido " + usuarioEncontrado.nombre + "!");
       navigate("/");
     } else {
       alert("Correo o contraseña incorrectos.");
@@ -32,78 +52,85 @@ export default function InicioSesion() {
   }
 
   return (
-    <main className="container mb-5">
-      <div className="row justify-content-center mt-4">
-        <div className={`col-12 col-md-8 col-lg-5 ${styles.contenedorFormulario}`}>
-          <h2
-            className="text-center text-white mb-4"
-            style={{ fontFamily: "'Orbitron', sans-serif" }}
-          >
-            INICIAR SESIÓN
-          </h2>
+    <>
+      <Navbar />
+      <CarritoOffcanvas />
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="mb-3">
-              <label htmlFor="correo" className="form-label text-light">
-                Correo Electrónico
-              </label>
-              <div className="input-group">
-                <span className="input-group-text bg-dark text-secondary border-secondary">
-                  <i className="bi bi-envelope"></i>
-                </span>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="correo"
-                  placeholder="Ej: usuario@duoc.cl"
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
-                  required
-                />
+      <main className="container flex-grow-1 mb-5" style={{ marginTop: 120 }}>
+        <div className="row justify-content-center">
+          <div className={`col-12 col-md-8 col-lg-5 ${styles.contenedorFormulario}`}>
+            <h2
+              className="text-center text-white mb-4"
+              style={{ fontFamily: "'Orbitron', sans-serif" }}
+            >
+              INICIAR SESIÓN
+            </h2>
+
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="mb-3">
+                <label htmlFor="correo" className="form-label text-light">
+                  Correo Electrónico
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-dark text-secondary border-secondary">
+                    <i className="bi bi-envelope"></i>
+                  </span>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="correo"
+                    placeholder="Ej: admin@duoc.cl"
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="mb-4">
-              <label htmlFor="clave" className="form-label text-light">
-                Contraseña
-              </label>
-              <div className="input-group">
-                <span className="input-group-text bg-dark text-secondary border-secondary">
-                  <i className="bi bi-lock"></i>
-                </span>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="clave"
-                  placeholder="Ingrese su contraseña"
-                  value={clave}
-                  onChange={(e) => setClave(e.target.value)}
-                  required
-                />
+              <div className="mb-4">
+                <label htmlFor="clave" className="form-label text-light">
+                  Contraseña
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-dark text-secondary border-secondary">
+                    <i className="bi bi-lock"></i>
+                  </span>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="clave"
+                    placeholder="Ingrese su contraseña"
+                    value={clave}
+                    onChange={(e) => setClave(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="d-grid gap-2 mb-3">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ fontFamily: "'Orbitron', sans-serif" }}
-              >
-                Ingresar
-              </button>
-            </div>
+              <div className="d-grid gap-2 mb-3">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ fontFamily: "'Orbitron', sans-serif" }}
+                >
+                  Ingresar
+                </button>
+              </div>
 
-            <div className="text-center">
-              <p className="text-secondary small mb-0">
-                ¿No tienes una cuenta?{" "}
-                <Link to="/registro" className="text-success text-decoration-none fw-bold">
-                  Regístrate aquí
-                </Link>
-              </p>
-            </div>
-          </form>
+              <div className="text-center">
+                <p className="text-secondary small mb-0">
+                  ¿No tienes una cuenta?{" "}
+                  <Link to="/registro" className="text-success text-decoration-none fw-bold">
+                    Regístrate aquí
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+
+      <Footer />
+    </>
   );
 }
