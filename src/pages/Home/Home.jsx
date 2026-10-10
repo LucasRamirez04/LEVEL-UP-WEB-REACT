@@ -27,21 +27,39 @@ export default function Home() {
   }, [productos]);
 
   // Guarda en localStorage directamente sin depender de Context
-  const agregarAlCarrito = (producto, precioFinal) => {
-    const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
-    const itemAAgregar = {
-      codigo: producto.codigo,
-      nombre: producto.nombre,
-      precio: precioFinal,
-      imagen: producto.imagen,
-    };
+// En src/pages/Home/Home.jsx
 
-    const nuevoCarrito = [...carritoActual, itemAAgregar];
-    localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+const agregarAlCarrito = (producto, precioFinal) => {
+  // 1. Obtener los productos que ya están en el carrito
+  const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
 
-    // Despacha un evento global para que el Navbar actualice su contador de inmediato
-    window.dispatchEvent(new Event("storage"));
+  // 2. Contar cuántas veces se ha agregado ESTE producto específico al carrito
+  const cantidadEnCarrito = carritoActual.filter(
+    (item) => item.codigo === producto.codigo
+  ).length;
+
+  // 3. Validar si supera el stock del producto
+  if (cantidadEnCarrito >= producto.stock) {
+    alert(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
+    return;
+  }
+
+  // 4. Si hay stock disponible, creamos el item y lo guardamos
+  const itemAAgregar = {
+    codigo: producto.codigo,
+    nombre: producto.nombre,
+    precio: precioFinal,
+    imagen: producto.imagen,
   };
+
+  const nuevoCarrito = [...carritoActual, itemAAgregar];
+  localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+
+  // 5. Notificar al Navbar para actualizar el badge de contador
+  window.dispatchEvent(new Event("storage"));
+  
+  alert(`"${producto.nombre}" agregado al carrito.`);
+};
 
   return (
     <>
