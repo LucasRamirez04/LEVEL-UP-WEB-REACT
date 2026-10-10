@@ -4,9 +4,15 @@ import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import { productosIniciales as listaProductosBase, calcularPrecioFinal, formatearPrecio } from "../../data/productos";
 import styles from "./Home.module.css";
+import App_alert from "../../components/alerta/alerta";
 
 export default function Home() {
   const [productos, setProductos] = useState([]);
+  
+  //constantes para implementar alerta
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState("");
+  const [tipoAlerta, setTipoAlerta] = useState("");
 
   // Carga los productos desde localStorage si existen, o usa la lista base
   useEffect(() => {
@@ -40,7 +46,10 @@ const agregarAlCarrito = (producto, precioFinal) => {
 
   // 3. Validar si supera el stock del producto
   if (cantidadEnCarrito >= producto.stock) {
-    alert(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
+    setMostrarAlerta(true);
+    setMensajeAlerta(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
+    setTipoAlerta("danger")
+    //alert(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
     return;
   }
 
@@ -58,14 +67,25 @@ const agregarAlCarrito = (producto, precioFinal) => {
   // 5. Notificar al Navbar para actualizar el badge de contador
   window.dispatchEvent(new Event("storage"));
   
-  alert(`"${producto.nombre}" agregado al carrito.`);
+  setMostrarAlerta(true);
+  setMensajeAlerta(`"${producto.nombre}" agregado al carrito.`);
+  setTipoAlerta("success")
+  //alert(`"${producto.nombre}" agregado al carrito.`);
 };
 
   return (
     <>
       <Navbar />
       <CarritoOffcanvas />
-
+      {/* Contenedor flotante para no desarmar el layout */}
+    <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
+      <App_alert
+        mostrarAlert={mostrarAlerta}
+        cerrarAlert={() => setMostrarAlerta(false)}
+        variant={tipoAlerta}
+        msgAlert={mensajeAlerta}
+      />
+    </div>
       <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
         <section id="sec-ofertas" className="py-5">
           <div className="container">
