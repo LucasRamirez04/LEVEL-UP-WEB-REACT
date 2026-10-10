@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 
-import Home from "./pages/Home/Home";
+import Inicio from "./pages/Inicio/Inicio";
 import Catalogo from "./pages/Catalogo/Catalogo";
 import DetalleProducto from "./pages/DetalleProducto/DetalleProducto";
 import Comunidad from "./pages/Comunidad/Comunidad";
@@ -13,7 +13,7 @@ import Administrador from "./pages/Administrador/Administrador";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Inicio />} />
       <Route path="/productos" element={<Catalogo />} />
       <Route path="/productos/:codigo" element={<DetalleProducto />} />
       <Route path="/comunidad" element={<Comunidad />} />

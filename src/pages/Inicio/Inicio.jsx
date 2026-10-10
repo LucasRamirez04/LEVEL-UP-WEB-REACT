@@ -3,10 +3,10 @@ import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import { productosIniciales as listaProductosBase, calcularPrecioFinal, formatearPrecio } from "../../data/productos";
-import styles from "./Home.module.css";
+import styles from "./Inicio.module.css";
 import App_alert from "../../components/alerta/alerta";
 
-export default function Home() {
+export default function Inicio() {
   const [productos, setProductos] = useState([]);
   
   //constantes para implementar alerta
