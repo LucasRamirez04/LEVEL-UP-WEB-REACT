@@ -9,6 +9,7 @@ import Contacto from "./pages/Contacto/Contacto";
 import InicioSesion from "./pages/InicioSesion/InicioSesion";
 import RegistroUsuario from "./pages/RegistroUsuario/RegistroUsuario";
 import Administrador from "./pages/Administrador/Administrador";
+import Pago from "./pages/Pago/Pago";
 
 export default function AppRoutes() {
   return (
@@ -22,6 +23,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<InicioSesion />} />
       <Route path="/registro" element={<RegistroUsuario />} />
       <Route path="/administrador" element={<Administrador />} />
+      <Route path="/pago" element={<Pago />} />
     </Routes>
   );
 }

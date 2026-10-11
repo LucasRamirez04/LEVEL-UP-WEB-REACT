@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { formatearPrecio } from "../../data/productos";
 import styles from "./CarritoOffcanvas.module.css";
+import { useNavigate } from "react-router-dom";
 
 export default function CarritoOffcanvas() {
   const [carrito, setCarrito] = useState([]);
+  const navigate = useNavigate();
 
   // Carga inicial del carrito desde localStorage
   const cargarCarrito = () => {
@@ -104,7 +106,14 @@ export default function CarritoOffcanvas() {
           <strong className={styles.textoNeonVerde}>{formatearPrecio(total)}</strong>
         </div>
         <div className="d-flex flex-column gap-2">
-          <button className={`btn w-100 py-2 ${styles.botonBuscarNeon}`}>Continuar al Pago</button>
+          <button 
+            className={`btn w-100 py-2 ${styles.botonBuscarNeon}`}
+            onClick={() => navigate("/pago")}
+            data-bs-dismiss="offcanvas" 
+            disabled={carrito.length === 0}
+          >
+            Continuar al Pago
+          </button>
           <button
             className="btn btn-sm btn-outline-danger w-100"
             disabled={carrito.length === 0}
