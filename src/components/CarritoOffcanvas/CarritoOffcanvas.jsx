@@ -70,10 +70,7 @@ export default function CarritoOffcanvas() {
           </p>
         ) : (
           carrito.map((producto, indice) => (
-            <div
-              key={indice}
-              className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary"
-            >
+            <div key={indice} className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary">
               <div className="d-flex align-items-center gap-2">
                 <img
                   src={producto.imagen}
