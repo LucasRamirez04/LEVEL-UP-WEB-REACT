@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import {
-  productosIniciales as listaProductosBase,
-  calcularPrecioFinal,
-  formatearPrecio,
-} from "../../data/productos";
+import { productosIniciales as listaProductosBase, calcularPrecioFinal, formatearPrecio } from "../../data/productos";
 import styles from "./Catalogo.module.css";
+import App_alert from "../../components/alerta/alerta";
 
 const CATEGORIAS = [
   "Juegos de Mesa",
@@ -22,6 +19,10 @@ export default function Catalogo() {
   const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [categoria, setCategoria] = useState("todas");
+
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState("");
+  const [tipoAlerta, setTipoAlerta] = useState("");
 
   // Carga los productos desde localStorage si existen, o usa la lista base
   useEffect(() => {
@@ -45,9 +46,11 @@ export default function Catalogo() {
     // Validacion de stock
     const yaEnCarrito = carritoActual.filter((item) => item.codigo === producto.codigo).length;
     if (yaEnCarrito >= producto.stock) {
-      alert(
+      setMostrarAlerta(true);
+      setMensajeAlerta(
         `No queda stock disponible de "${producto.nombre}". Ya tienes en el carrito el máximo permitido (${producto.stock}).`
       );
+      setTipoAlerta("danger");
       return;
     }
 
@@ -63,6 +66,10 @@ export default function Catalogo() {
 
     // despacha evento global para que Navbar actualice su contador
     window.dispatchEvent(new Event("storage"));
+
+    setMostrarAlerta(true);
+    setMensajeAlerta(`"${producto.nombre}" agregado al carrito.`);
+    setTipoAlerta("success");
   };
 
   function handleAgregarRapido(e, producto) {
@@ -75,6 +82,15 @@ export default function Catalogo() {
     <>
       <Navbar />
       <CarritoOffcanvas />
+
+      <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
+        <App_alert
+          mostrarAlert={mostrarAlerta}
+          cerrarAlert={() => setMostrarAlerta(false)}
+          variant={tipoAlerta}
+          msgAlert={mensajeAlerta}
+        />
+      </div>
 
       <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
         <section id="filtros-catalogo" className="container py-4">
