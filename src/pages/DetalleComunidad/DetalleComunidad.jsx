@@ -1,5 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { casosComunidad } from "../../data/casosComunidad";
+import Navbar from "../../components/Navbar/Navbar";
+import Footer from "../../components/Footer/Footer";
+import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import styles from "./DetalleComunidad.module.css";
 
 export default function DetalleComunidad() {
@@ -8,28 +11,42 @@ export default function DetalleComunidad() {
 
   if (!caso) {
     return (
-      <div className="container py-5 text-center">
-        <p className="text-white">No encontramos ese caso curioso.</p>
-        <Link to="/comunidad" className="btn btn-outline-light">
-          Volver a Blogs
-        </Link>
-      </div>
+      <>
+        <Navbar />
+        <CarritoOffcanvas />
+        <main className="flex-grow-1 contenedor-principal">
+          <div className="container py-5 text-center">
+            <p className="text-white">No encontramos ese caso curioso.</p>
+            <Link to="/comunidad" className="btn btn-outline-light">
+              Volver a Blogs
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </>
     );
   }
 
   return (
-    <div className="container py-5">
-      <Link to="/comunidad" className={`btn mb-4 ${styles.btnOutlineLight}`}>
-        &larr; Volver
-      </Link>
+    <>
+      <Navbar />
+      <CarritoOffcanvas />
+      <main className="flex-grow-1 contenedor-principal">
+        <div className="container py-5">
+          <Link to="/comunidad" className={`btn mb-4 ${styles.btnOutlineLight}`}>
+            &larr; Volver
+          </Link>
 
-      <article>
-        <h1>{caso.titulo}</h1>
-        <img src={caso.imagen} className="img-fluid rounded my-4" alt={caso.imagenAlt} />
-        {caso.parrafos.map((parrafo, i) => (
-          <p key={i}>{parrafo}</p>
-        ))}
-      </article>
-    </div>
+          <article>
+            <h1 className={styles.titulo}>{caso.titulo}</h1>
+            <img src={caso.imagen} className="img-fluid rounded my-4" alt={caso.imagenAlt} />
+            {caso.parrafos.map((parrafo, i) => (
+              <p key={i}>{parrafo}</p>
+            ))}
+          </article>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }
