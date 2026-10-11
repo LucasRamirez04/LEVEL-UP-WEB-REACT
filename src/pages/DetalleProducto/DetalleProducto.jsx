@@ -1,19 +1,19 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import {
-  productosIniciales as listaProductosBase,
-  calcularPrecioFinal,
-  formatearPrecio,
-} from "../../data/productos";
+import { productosIniciales as listaProductosBase, calcularPrecioFinal, formatearPrecio } from "../../data/productos";
 import styles from "./DetalleProducto.module.css";
+import App_alert from "../../components/alerta/alerta";
 
 export default function DetalleProducto() {
   const { codigo } = useParams(); // param dinamico de la URL
-  const navigate = useNavigate();
   const [cantidad, setCantidad] = useState(1);
+
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState("");
+  const [tipoAlerta, setTipoAlerta] = useState("");
 
   // Busca el producto en localStorage o en la lista base si no hay nada guardado
   const producto = useMemo(() => {
@@ -34,15 +34,19 @@ export default function DetalleProducto() {
     const stockDisponible = prod.stock - yaEnCarrito;
 
     if (stockDisponible <= 0) {
-      alert(
+      setMostrarAlerta(true);
+      setMensajeAlerta(
         `No queda stock disponible de "${prod.nombre}". Ya tienes en el carrito el máximo permitido (${prod.stock}).`
       );
+      setTipoAlerta("danger");
       return false;
     }
     if (unidades > stockDisponible) {
-      alert(
+      setMostrarAlerta(true);
+      setMensajeAlerta(
         `Solo puedes agregar ${stockDisponible} unidad(es) más de "${prod.nombre}" (stock disponible: ${prod.stock}, ya tienes ${yaEnCarrito} en el carrito).`
       );
+      setTipoAlerta("danger");
       return false;
     }
 
@@ -57,6 +61,10 @@ export default function DetalleProducto() {
 
     // Despacha evento global para que Navbar actualice su contador
     window.dispatchEvent(new Event("storage"));
+    
+    setMostrarAlerta(true);
+    setMensajeAlerta(`"${prod.nombre}" agregado al carrito (${unidades} unidad(es)).`);
+    setTipoAlerta("success");
     return true;
   };
 
@@ -83,14 +91,22 @@ export default function DetalleProducto() {
   const precioMostrado = producto.enOferta ? calcularPrecioFinal(producto) : producto.precio;
 
   function handleAgregar() {
-    const agregado = agregarAlCarrito(producto, cantidad, precioMostrado);
-    if (agregado) navigate("/productos");
+    agregarAlCarrito(producto, cantidad, precioMostrado);
   }
 
   return (
     <>
       <Navbar />
       <CarritoOffcanvas />
+
+      <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
+        <App_alert
+          mostrarAlert={mostrarAlerta}
+          cerrarAlert={() => setMostrarAlerta(false)}
+          variant={tipoAlerta}
+          msgAlert={mensajeAlerta}
+        />
+      </div>
 
       <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
         <div className="container py-5">
