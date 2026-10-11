@@ -3,6 +3,7 @@ import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import styles from "./Contacto.module.css";
+import App_alert from "../../components/alerta/alerta";
 
 const DOMINIOS_PERMITIDOS = ["@duoc.cl", "@profesor.duoc.cl", "@gmail.com"];
 
@@ -34,7 +35,10 @@ export default function Contacto() {
   const [mensaje, setMensaje] = useState("");
   const [errores, setErrores] = useState({ nombre: "", correo: "", mensaje: "" });
   const [tocado, setTocado] = useState({ nombre: false, correo: false, mensaje: false });
-  const [exito, setExito] = useState(false);
+
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState("");
+  const [tipoAlerta, setTipoAlerta] = useState("");
 
   function claseCampo(campo) {
     if (!tocado[campo]) return "form-control";
@@ -52,7 +56,9 @@ export default function Contacto() {
     setTocado({ nombre: true, correo: true, mensaje: true });
 
     if (errorNombre || errorCorreo || errorMensaje) {
-      setExito(false);
+      setMostrarAlerta(true);
+      setMensajeAlerta("No se pudo enviar el mensaje. Revisa los campos marcados en rojo.");
+      setTipoAlerta("danger");
       return;
     }
 
@@ -65,7 +71,10 @@ export default function Contacto() {
     });
     localStorage.setItem("mensajesContacto", JSON.stringify(mensajesGuardados));
 
-    setExito(true);
+    setMostrarAlerta(true);
+    setMensajeAlerta("¡Mensaje enviado! Te responderemos a la brevedad.");
+    setTipoAlerta("success");
+
     setNombre("");
     setCorreo("");
     setMensaje("");
@@ -77,6 +86,15 @@ export default function Contacto() {
     <>
       <Navbar />
       <CarritoOffcanvas />
+
+      <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
+        <App_alert
+          mostrarAlert={mostrarAlerta}
+          cerrarAlert={() => setMostrarAlerta(false)}
+          variant={tipoAlerta}
+          msgAlert={mensajeAlerta}
+        />
+      </div>
 
       <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
         <div className="container py-5">
@@ -186,12 +204,6 @@ export default function Contacto() {
                 <button type="submit" className={`btn ${styles.botonEnviarContacto}`}>
                   Enviar mensaje
                 </button>
-
-                {exito && (
-                  <div className="alert alert-success mt-3" role="alert">
-                    ¡Mensaje enviado! Te responderemos a la brevedad.
-                  </div>
-                )}
               </form>
             </section>
           </div>
