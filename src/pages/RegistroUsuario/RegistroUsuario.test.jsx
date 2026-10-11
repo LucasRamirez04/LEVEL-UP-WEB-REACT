@@ -33,9 +33,26 @@ test("Comprobar que la caja de texto 'Nombre' guarda correctamente lo que escrib
   // Buscamos el input a través de su etiqueta <label> asociada
   const inputNombre = screen.getByLabelText("Nombre");
   
-  // Simulamos de forma síncrona a un usuario tecleando la palabra "Juan"
+  // Simulamos de forma síncrona a un usuario tecleando la palabra "Franco"
   fireEvent.change(inputNombre, { target: { value: "Franco" } });
   
   // Verificamos que el valor interno de la caja haya cambiado
   expect(inputNombre.value).toBe("Franco");
+});
+
+test("Comprobar que el formulario bloquea el envío y alerta si el RUN está vacío", () => {
+  render(
+    <MemoryRouter>
+      <RegistroUsuario />
+    </MemoryRouter>
+  );
+  
+  // Buscamos el botón de registro por su rol y texto
+  const botonRegistro = screen.getByRole("button", { name: "Registrar Cuenta" });
+  
+  // Simulamos el clic directo sin llenar ningún dato en el formulario
+  fireEvent.click(botonRegistro);
+  
+  // Verificamos que la función de validación haya disparado exactamente esta alerta
+  expect(window.alert).toHaveBeenCalledWith("El RUN es requerido.");
 });
