@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { test, expect } from "vitest";
 import Comunidad from "./Comunidad";
@@ -43,4 +43,36 @@ test("Comprobar que se muestran los 3 mapas de eventos", () => {
 
   // 3. Verificamos que hay exactamente 3
   expect(mapas).toHaveLength(3);
+});
+
+
+test("Probar input del nombre en el formulario de inscripción", () => {
+  // 1. Montamos la vista
+  render(
+    <MemoryRouter>
+      <Comunidad />
+    </MemoryRouter>
+  );
+
+  // 2. Buscamos el campo "Nombre" y escribimos "Ana"
+  const campoNombre = screen.getByLabelText("Nombre");
+  fireEvent.change(campoNombre, { target: { value: "Ana" } });
+
+  // 3. Verificamos que el campo muestra lo que escribimos
+  expect(campoNombre.value).toBe("Ana");
+});
+
+test("Comprobar que el formulario avisa cuando se envía vacío", () => {
+  // 1. Montamos la vista
+  render(
+    <MemoryRouter>
+      <Comunidad />
+    </MemoryRouter>
+  );
+
+  // 2. Hacemos clic en "Inscribirme" sin escribir nada
+  fireEvent.click(screen.getByRole("button", { name: /inscribirme/i }));
+
+  // 3. Verificamos que aparece el aviso de que el nombre es obligatorio
+  expect(screen.getByText("El nombre es obligatorio.")).toBeInTheDocument();
 });
