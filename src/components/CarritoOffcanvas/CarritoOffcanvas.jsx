@@ -33,13 +33,13 @@ export default function CarritoOffcanvas() {
     const nuevoCarrito = carrito.filter((_, index) => index !== indiceABorrar);
     setCarrito(nuevoCarrito);
     localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
-    window.addEventListener("storage", sincronizarDatos);
+    window.dispatchEvent(new Event("storage"));
   };
 
   const vaciarCarrito = () => {
     setCarrito([]);
     localStorage.removeItem("carrito");
-    window.addEventListener("storage", sincronizarDatos);
+    window.dispatchEvent(new Event("storage"));
   };
 
   return (
