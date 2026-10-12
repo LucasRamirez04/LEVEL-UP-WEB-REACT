@@ -12,7 +12,7 @@ export default function InicioSesion() {
   const [clave, setClave] = useState("");
   const navigate = useNavigate();
 
-  // Constantes para implementar alerta
+  // Estados de alerta
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
@@ -36,11 +36,11 @@ export default function InicioSesion() {
       return;
     }
 
-    // 1. Obtiene usuarios registrados de localStorage o el admin por defecto
+    // Obtiene usuarios registrados de localStorage o el admin por defecto
     const usuariosRegistrados =
       JSON.parse(localStorage.getItem("usuarios")) || usuarioAdminInicial;
 
-    // 2. Busca coincidencia de correo y clave
+    // Busca coincidencia de correo y clave
     const usuarioEncontrado = usuariosRegistrados.find(
       (u) =>
         u.correo.toLowerCase() === correoLimpio &&
@@ -48,10 +48,10 @@ export default function InicioSesion() {
     );
 
     if (usuarioEncontrado) {
-      // 3. Guarda la sesión activa en localStorage
+      // Guarda la sesión activa en localStorage
       localStorage.setItem("usuarioActivo", JSON.stringify(usuarioEncontrado));
 
-      // 4. Notifica al Navbar para actualizar nombre y botón de salida
+      // Notifica al Navbar para actualizar nombre y botón de salida
       window.dispatchEvent(new Event("storage"));
 
       setMostrarAlerta(true);
@@ -70,7 +70,6 @@ export default function InicioSesion() {
       <Navbar />
       <CarritoOffcanvas />
 
-      {/* Contenedor flotante para no desarmar el layout */}
       <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
         <App_alert
           mostrarAlert={mostrarAlerta}

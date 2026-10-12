@@ -51,7 +51,7 @@ export default function RegistroUsuario() {
     setForm((actual) => ({
       ...actual,
       [campo]: valor,
-      ...(campo === "region" ? { comuna: "" } : {}), // al cambiar región, se resetea la comuna
+      ...(campo === "region" ? { comuna: "" } : {}),
     }));
   }
 
@@ -101,17 +101,17 @@ export default function RegistroUsuario() {
     if (form.direccion.trim().length > 300)
       return mostrarMensaje("La dirección no puede tener más de 300 caracteres.", "danger");
 
-    // 1. Obtener lista actual de usuarios desde localStorage
+    // Obtener lista actual de usuarios desde localStorage
     const usuariosRegistrados =
       JSON.parse(localStorage.getItem("usuarios")) || usuarioAdminInicial;
 
-    // 2. Verificar que no exista un usuario con el mismo RUN o correo
+    // Verificar que no exista un usuario con el mismo RUN o correo
     const runExiste = usuariosRegistrados.some((u) => u.run === form.run.trim());
     if (runExiste) {
       return mostrarMensaje("Ya existe un usuario registrado con este RUN.", "danger");
     }
 
-    // 3. Crear el nuevo usuario
+    // Crear el nuevo usuario
     const nuevoUsuario = {
       run: form.run.trim(),
       nombre: form.nombre.trim(),
@@ -124,7 +124,7 @@ export default function RegistroUsuario() {
       direccion: form.direccion.trim(),
     };
 
-    // 4. Guardar en localStorage
+    // Guardar en localStorage
     const nuevaLista = [...usuariosRegistrados, nuevoUsuario];
     localStorage.setItem("usuarios", JSON.stringify(nuevaLista));
 
@@ -137,7 +137,6 @@ export default function RegistroUsuario() {
       <Navbar />
       <CarritoOffcanvas />
 
-      {/* BORRAR CUANDO SE CREE EL ESTILO CSS DE ALERTA*/}
       <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}> 
         <App_alert
           mostrarAlert={mostrarAlerta} 
