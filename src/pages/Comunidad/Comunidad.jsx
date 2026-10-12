@@ -1,4 +1,4 @@
-// VISTA COMUNIDAD: muestra noticias (casos curiosos), mapas de eventos y un formulario de inscripción.
+// VISTA COMUNIDAD
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -37,10 +37,7 @@ function sumarPuntos(correo, puntos) {
     puntosPorCorreo = JSON.parse(textoGuardado);
   }
 
-  let puntosActuales = 0;
-  if (puntosPorCorreo[correo] !== undefined) {
-    puntosActuales = puntosPorCorreo[correo];
-  }
+  const puntosActuales = puntosPorCorreo[correo] || 0;
 
   puntosPorCorreo[correo] = puntosActuales + puntos;
   localStorage.setItem("puntosLevelUp", JSON.stringify(puntosPorCorreo));
@@ -53,19 +50,17 @@ function sumarPuntos(correo, puntos) {
 export default function Comunidad() {
   const casos = Object.values(casosComunidad);
 
-  // ESTADO (useState): la alerta reutilizable
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
 
-  // ESTADO (useState): lo que hay escrito en el formulario
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [eventoId, setEventoId] = useState("");
 
 
 
-  // ALERTA REUTILIZABLE: muestra la alerta de Bootstrap con un texto y un color
+  // ALERTA REUTILIZABLE
   function mostrarMensaje(mensaje, tipo) {
     setMensajeAlerta(mensaje);
     setTipoAlerta(tipo);
@@ -74,7 +69,7 @@ export default function Comunidad() {
 
 
 
-  // VALIDACIÓN DE FORMULARIOS: 5 revisiones en orden; si una falla avisa y corta, si pasan todas guarda y suma puntos
+  // VALIDACIÓN DE FORMULARIOS
   function manejarInscripcion(e) {
     e.preventDefault();
 
