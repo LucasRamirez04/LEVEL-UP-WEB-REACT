@@ -18,11 +18,10 @@ import { formatearPrecio } from "../../data/productos";
 import styles from "./Pago.module.css";
 
 export default function Pago() {
-  // Estados originales de la vista de pago
   const [carrito, setCarrito] = useState([]);
   const [metodoPago, setMetodoPago] = useState("credito");
-  const [estadoSimulacion, setEstadoSimulacion] = useState("exito"); // "exito" o "error"
-  const [resultadoPago, setResultadoPago] = useState(null); // null | "aprobado" | "rechazado"
+  const [estadoSimulacion, setEstadoSimulacion] = useState("exito"); 
+  const [resultadoPago, setResultadoPago] = useState(null); 
 
   // Constantes para implementar alerta reutilizable
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
@@ -40,23 +39,16 @@ export default function Pago() {
     e.preventDefault();
 
     if (estadoSimulacion === "exito") {
-      // 1. Vaciar el carrito en localStorage
       localStorage.setItem("carrito", JSON.stringify([]));
-      
-      // 2. Disparar evento para actualizar Navbar/Offcanvas
       window.dispatchEvent(new Event("storage"));
       setCarrito([]);
       setResultadoPago("aprobado");
 
-      // 3. Disparar Alerta de Éxito
       setMostrarAlerta(true);
       setMensajeAlerta("¡Pago Aprobado con Éxito! Tu orden ha sido procesada correctamente.");
       setTipoAlerta("success");
     } else {
-      // Flujo de error simulado
       setResultadoPago("rechazado");
-
-      // Disparar Alerta de Error
       setMostrarAlerta(true);
       setMensajeAlerta("Pago Rechazado. Fondos insuficientes o tarjeta denegada.");
       setTipoAlerta("danger");
@@ -73,7 +65,6 @@ export default function Pago() {
       <Navbar />
       <CarritoOffcanvas />
 
-      {/* Contenedor flotante para la alerta (Igual que en Inicio.jsx) */}
       <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
         <App_alert
           mostrarAlert={mostrarAlerta}
@@ -132,16 +123,18 @@ export default function Pago() {
             </Card>
           )}
 
-          {/* Formulario Principal (Solo visible si no se ha pagado aún) */}
+          {/* Formulario Principal */}
           {resultadoPago === null && (
-            <Row className="g-4">
-              <Col lg={7}>
-                <Card className={`p-4 text-white ${styles.tarjetaPago}`}>
-                  <h5 className="text-success mb-3">
-                    <i className="bi bi-credit-card-2-front me-2"></i>Datos de Pago
-                  </h5>
-                  <Form onSubmit={handleProcesarPago}>
-                    {/* Switch de Simulación */}
+            <Form onSubmit={handleProcesarPago}>
+              <Row className="g-4">
+                <Col lg={7}>
+                  
+                  {/* 1. TARJETA: Datos de Pago */}
+                  <Card className={`p-4 text-white mb-4 ${styles.tarjetaPago}`}>
+                    <h5 className="text-success mb-3">
+                      <i className="bi bi-credit-card-2-front me-2"></i>Datos de Pago
+                    </h5>
+                    
                     <div className="p-3 mb-3 rounded bg-dark border border-warning">
                       <Form.Label className="small fw-bold text-warning d-block">
                         <i className="bi bi-gear-fill me-1"></i>Opciones del Simulador:
@@ -167,7 +160,7 @@ export default function Pago() {
                     </div>
 
                     <Form.Group className="mb-3">
-                      <Form.Label className="small text-secondary">Método de Pago</Form.Label>
+                      <Form.Label className="small text-secondary">Método de Pago <span className="text-danger">*</span></Form.Label>
                       <Form.Select
                         value={metodoPago}
                         onChange={(e) => setMetodoPago(e.target.value)}
@@ -180,94 +173,192 @@ export default function Pago() {
                     </Form.Group>
 
                     <Form.Group className="mb-3">
-                      <Form.Label className="small text-secondary">Nombre del Titular</Form.Label>
+                      <Form.Label className="small text-secondary">Nombre en la Tarjeta <span className="text-danger">*</span></Form.Label>
                       <Form.Control
                         type="text"
                         size="sm"
                         placeholder="Ej: Juan Pérez"
-                        defaultValue="Juan Pérez"
                         required
                       />
                     </Form.Group>
 
-                    <Row className="g-2 mb-3">
+                    <Row className="g-2 mb-2">
                       <Col xs={8}>
-                        <Form.Label className="small text-secondary">Número de Tarjeta</Form.Label>
+                        <Form.Label className="small text-secondary">Número de Tarjeta <span className="text-danger">*</span></Form.Label>
                         <Form.Control
                           type="text"
                           size="sm"
                           placeholder="1234 5678 9101 1121"
-                          defaultValue="4567 8901 2345 6789"
                           required
                         />
                       </Col>
                       <Col xs={4}>
-                        <Form.Label className="small text-secondary">CVV</Form.Label>
+                        <Form.Label className="small text-secondary">CVV <span className="text-danger">*</span></Form.Label>
                         <Form.Control
                           type="password"
                           size="sm"
                           maxLength={3}
                           placeholder="123"
-                          defaultValue="123"
                           required
                         />
                       </Col>
                     </Row>
+                  </Card>
 
-                    <Button
-                      type="submit"
-                      variant="success"
-                      className="w-100 fw-bold py-2 mt-2"
-                      disabled={carrito.length === 0}
-                    >
-                      {carrito.length === 0
-                        ? "Carrito Vacío"
-                        : `Pagar ${formatearPrecio(totalPagar)}`}
-                    </Button>
-                  </Form>
-                </Card>
-              </Col>
-
-              <Col lg={5}>
-                <Card className={`p-4 text-white ${styles.tarjetaPago}`}>
-                  <h5 className="text-info mb-3">
-                    <i className="bi bi-receipt me-2"></i>Resumen de la Orden
-                  </h5>
-
-                  {carrito.length === 0 ? (
-                    <p className="text-secondary small">No hay productos en el carrito.</p>
-                  ) : (
-                    <ListGroup variant="flush" className="mb-3">
-                      {carrito.map((item, idx) => (
-                        <ListGroup.Item
-                          key={idx}
-                          className="bg-transparent text-white border-secondary px-0 d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <span className="small d-block fw-semibold">{item.nombre}</span>
-                            <small className="text-secondary">{item.codigo}</small>
-                          </div>
-                          <Badge bg="success" className="text-dark">
-                            {formatearPrecio(item.precio)}
-                          </Badge>
-                        </ListGroup.Item>
-                      ))}
-                    </ListGroup>
-                  )}
-
-                  <div className={`p-3 text-white ${styles.resumenTotal}`}>
-                    <div className="d-flex justify-content-between small text-secondary mb-1">
-                      <span>Artículos:</span>
-                      <span>{carrito.length}</span>
+                  {/* 2. TARJETA: Información del Cliente y Despacho (AHORA ABAJO) */}
+                  <Card className={`p-4 text-white ${styles.tarjetaPago}`}>
+                    
+                    {/* Sección 1: Información del cliente */}
+                    <div className="mb-4">
+                      <h5 className="text-info fw-bold mb-1">Información del cliente</h5>
+                      <p className="small text-secondary mb-3">Completa la siguiente información</p>
+                      
+                      <Row className="g-3 mb-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Nombre <span className="text-danger">*</span></Form.Label>
+                            <Form.Control type="text" size="sm" required />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Apellidos <span className="text-danger">*</span></Form.Label>
+                            <Form.Control type="text" size="sm" required />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <Row className="g-3">
+                        <Col md={12}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Correo <span className="text-danger">*</span></Form.Label>
+                            <Form.Control 
+                              type="email" 
+                              size="sm" 
+                              required 
+                              pattern="^.+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$"
+                              title="El correo debe terminar en @duoc.cl, @profesor.duoc.cl o @gmail.com"
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
                     </div>
-                    <div className="d-flex justify-content-between fw-bold fs-5 text-white">
-                      <span>Total:</span>
-                      <span className="text-success">{formatearPrecio(totalPagar)}</span>
+
+                    {/* Sección 2: Dirección de entrega */}
+                    <div className="border-top border-secondary pt-4">
+                      <h5 className="text-info fw-bold mb-1">Dirección de entrega de los productos</h5>
+                      <p className="small text-secondary mb-3">Ingrese dirección de forma detallada</p>
+                      
+                      <Row className="g-3 mb-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Calle <span className="text-danger">*</span></Form.Label>
+                            <Form.Control type="text" size="sm" required />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Departamento (opcional)</Form.Label>
+                            <Form.Control type="text" size="sm" placeholder="Ej: 603" />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <Row className="g-3 mb-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Región <span className="text-danger">*</span></Form.Label>
+                            <Form.Select size="sm" required defaultValue="RM">
+                              <option value="">Seleccione...</option>
+                              <option value="RM">Región Metropolitana de Santiago</option>
+                              <option value="V">Valparaíso</option>
+                              <option value="VIII">Biobío</option>
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Comuna <span className="text-danger">*</span></Form.Label>
+                            <Form.Select size="sm" required defaultValue="Cerrillos">
+                              <option value="">Seleccione...</option>
+                              <option value="Cerrillos">Cerrillos</option>
+                              <option value="Santiago">Santiago</option>
+                              <option value="Puente Alto">Puente Alto</option>
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <Row className="g-3">
+                        <Col md={12}>
+                          <Form.Group>
+                            <Form.Label className="small text-white-50">Indicaciones para la entrega (opcional)</Form.Label>
+                            <Form.Control as="textarea" rows={3} size="sm" placeholder="Ej.: Entre calles, color del edificio, no tiene timbre." />
+                          </Form.Group>
+                        </Col>
+                      </Row>
                     </div>
-                  </div>
-                </Card>
-              </Col>
-            </Row>
+
+                    {/* El botón de Confirmar Pago se mueve aquí abajo para que sea el último paso del formulario */}
+                    <div className="mt-4 border-top border-secondary pt-4">
+                      <Button
+                        type="submit"
+                        variant="success"
+                        className="w-100 fw-bold py-3 fs-5"
+                        disabled={carrito.length === 0}
+                      >
+                        {carrito.length === 0
+                          ? "Carrito Vacío"
+                          : `Confirmar Pago por ${formatearPrecio(totalPagar)}`}
+                      </Button>
+                    </div>
+
+                  </Card>
+                </Col>
+
+                {/* Resumen de la Orden (Columna Derecha) */}
+                <Col lg={5}>
+                  <Card className={`p-4 text-white ${styles.tarjetaPago} sticky-top`} style={{ top: '100px' }}>
+                    <h5 className="text-info mb-3">
+                      <i className="bi bi-receipt me-2"></i>Resumen de la Orden
+                    </h5>
+
+                    {carrito.length === 0 ? (
+                      <p className="text-secondary small">No hay productos en el carrito.</p>
+                    ) : (
+                      <ListGroup variant="flush" className="mb-3">
+                        {carrito.map((item, idx) => (
+                          <ListGroup.Item
+                            key={idx}
+                            className="bg-transparent text-white border-secondary px-0 d-flex justify-content-between align-items-center"
+                          >
+                            <div>
+                              <span className="small d-block fw-semibold">{item.nombre}</span>
+                              <small className="text-secondary">{item.codigo}</small>
+                            </div>
+                            <Badge bg="success" className="text-dark">
+                              {formatearPrecio(item.precio)}
+                            </Badge>
+                          </ListGroup.Item>
+                        ))}
+                      </ListGroup>
+                    )}
+
+                    <div className={`p-3 text-white ${styles.resumenTotal}`}>
+                      <div className="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Artículos:</span>
+                        <span>{carrito.length}</span>
+                      </div>
+                      <div className="d-flex justify-content-between small text-secondary mb-2 border-bottom border-secondary pb-2">
+                        <span>Envío:</span>
+                        <span>Gratis</span>
+                      </div>
+                      <div className="d-flex justify-content-between fw-bold fs-5 text-white">
+                        <span>Total:</span>
+                        <span className="text-success">{formatearPrecio(totalPagar)}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            </Form>
           )}
         </Container>
       </main>
