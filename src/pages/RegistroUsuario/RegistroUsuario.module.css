@@ -14,6 +14,10 @@
   border-radius: 5px;
 }
 
+.contenedorFormulario :global(.form-control::placeholder) {
+  color: #888888;
+}
+
 .contenedorFormulario :global(.form-control:focus),
 .contenedorFormulario :global(.form-select:focus) {
   background-color: #222222;
