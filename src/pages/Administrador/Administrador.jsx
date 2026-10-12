@@ -40,7 +40,7 @@ export default function Administrador() {
   const [productos, setProductos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   
-  // NUEVO: Estado para las ventas
+  //Estado para las ventas
   const [ventas, setVentas] = useState([]);
 
   const [formProd, setFormProd] = useState(PRODUCTO_VACIO);
@@ -49,10 +49,10 @@ export default function Administrador() {
   const [formUser, setFormUser] = useState(USUARIO_VACIO);
   const [indiceUserEdicion, setIndiceUserEdicion] = useState(-1);
 
-  // NUEVO: Calcular ingresos totales automáticamente
+  //Calcular ingresos totales automáticamente
   const ingresosTotales = ventas.reduce((acc, venta) => acc + venta.total, 0);
 
-  // Carga inicial desde localStorage o valores por defecto
+  //Carga inicial desde localStorage o valores por defecto
   useEffect(() => {
     const productosGuardados = JSON.parse(localStorage.getItem("productos"));
     if (productosGuardados && productosGuardados.length > 0) {
@@ -70,7 +70,7 @@ export default function Administrador() {
       localStorage.setItem("usuarios", JSON.stringify(usuarioAdminInicial));
     }
 
-    // NUEVO: Cargar historial de ventas
+    
     const ventasGuardadas = JSON.parse(localStorage.getItem("ventas"));
     if (ventasGuardadas && ventasGuardadas.length > 0) {
       setVentas(ventasGuardadas);
