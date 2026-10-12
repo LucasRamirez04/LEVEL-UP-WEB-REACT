@@ -1,3 +1,5 @@
+// VISTA COMUNIDAD: muestra noticias (casos curiosos), mapas de eventos y un formulario de inscripción.
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { casosComunidad } from "../../data/casosComunidad";
@@ -9,45 +11,70 @@ import { eventosComunidad } from "../../data/eventosComunidad";
 import App_alert from "../../components/alerta/alerta";
 
 const DOMINIOS_PERMITIDOS = ["@duoc.cl", "@profesor.duoc.cl", "@gmail.com"];
+const PUNTOS_POR_INSCRIPCION = 50;
 
-// Guarda una inscripción en el navegador (localStorage), sumándola a las que ya había
+// GUARDADO: guarda cada inscripción en el navegador (localStorage)
 function guardarInscripcion(inscripcion) {
-  // 1. Leemos lo que había guardado antes (puede no haber nada todavía)
   const textoGuardado = localStorage.getItem("inscripcionesEventos");
 
-  // 2. Armamos la lista: si no había nada, partimos con una lista vacía
   let lista = [];
   if (textoGuardado !== null) {
-    lista = JSON.parse(textoGuardado); // convierte el texto guardado en una lista
+    lista = JSON.parse(textoGuardado);
   }
 
-  // 3. Agregamos la inscripción nueva al final de la lista
   lista.push(inscripcion);
-
-  // 4. Guardamos la lista completa, de vuelta como texto
   localStorage.setItem("inscripcionesEventos", JSON.stringify(lista));
 }
 
 
+
+// PUNTOS LEVELUP: suma puntos a un correo cada vez que se inscribe a un evento
+function sumarPuntos(correo, puntos) {
+  const textoGuardado = localStorage.getItem("puntosLevelUp");
+
+  let puntosPorCorreo = {};
+  if (textoGuardado !== null) {
+    puntosPorCorreo = JSON.parse(textoGuardado);
+  }
+
+  let puntosActuales = 0;
+  if (puntosPorCorreo[correo] !== undefined) {
+    puntosActuales = puntosPorCorreo[correo];
+  }
+
+  puntosPorCorreo[correo] = puntosActuales + puntos;
+  localStorage.setItem("puntosLevelUp", JSON.stringify(puntosPorCorreo));
+
+  return puntosPorCorreo[correo];
+}
+
+
+
 export default function Comunidad() {
   const casos = Object.values(casosComunidad);
-  // Estados de la alerta 
+
+  // ESTADO (useState): la alerta reutilizable
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
 
-
-  // Estados del formulario de inscripción
+  // ESTADO (useState): lo que hay escrito en el formulario
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [eventoId, setEventoId] = useState("");
 
+
+
+  // ALERTA REUTILIZABLE: muestra la alerta de Bootstrap con un texto y un color
   function mostrarMensaje(mensaje, tipo) {
     setMensajeAlerta(mensaje);
     setTipoAlerta(tipo);
     setMostrarAlerta(true);
   }
 
+
+
+  // VALIDACIÓN DE FORMULARIOS: 5 revisiones en orden; si una falla avisa y corta, si pasan todas guarda y suma puntos
   function manejarInscripcion(e) {
     e.preventDefault();
 
@@ -72,22 +99,34 @@ export default function Comunidad() {
       return;
     }
 
-    // Buscamos en la lista de eventos el que eligió la persona
+
+    
     const evento = eventosComunidad.find((ev) => ev.id === eventoId);
 
-    // Guardamos la inscripción
     guardarInscripcion({
       nombre: nombre.trim(),
       correo: correo.trim(),
       eventoId: eventoId,
     });
 
-    // Avisamos con la alerta verde
-    mostrarMensaje(`¡Quedaste inscrito en ${evento.ciudad}!`, "success");
+    const totalPuntos = sumarPuntos(correo.trim().toLowerCase(), PUNTOS_POR_INSCRIPCION);
+
+    mostrarMensaje(
+      `¡Quedaste inscrito en ${evento.ciudad}! Ganaste ${PUNTOS_POR_INSCRIPCION} puntos LevelUp (tienes actualmente ${totalPuntos} puntos).`,
+      "success"
+    );
+
     setNombre("");
     setCorreo("");
     setEventoId("");
   }
+
+
+
+
+
+
+
 
   return (
     <>
@@ -96,10 +135,10 @@ export default function Comunidad() {
 
       <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
         <App_alert
-          mostrarAlert={mostrarAlerta} 
-          cerrarAlert={() => setMostrarAlerta(false)} 
-          variant={tipoAlerta} 
-          msgAlert={mensajeAlerta} 
+          mostrarAlert={mostrarAlerta}
+          cerrarAlert={() => setMostrarAlerta(false)}
+          variant={tipoAlerta}
+          msgAlert={mensajeAlerta}
         />
       </div>
 
@@ -108,13 +147,12 @@ export default function Comunidad() {
           <h1 className={`text-center mb-5 ${styles.titulo}`}>Noticias Importantes</h1>
 
           {casos.map((caso, index) => (
-          
+
             <article
               key={caso.id}
               id={`Caso${caso.numero}`}
-              className={`row align-items-center mb-4 p-3 ${styles.tarjetaBlog} ${
-                index % 2 === 1 ? "flex-md-row-reverse" : ""
-              }`}
+              className={`row align-items-center mb-4 p-3 ${styles.tarjetaBlog} ${index % 2 === 1 ? "flex-md-row-reverse" : ""
+                }`}
             >
               <div className="col-md-6">
                 <h2 className={styles.titulo}>Caso Curioso #{caso.numero}</h2>
@@ -160,7 +198,7 @@ export default function Comunidad() {
         <section id="inscripcion-evento" className="container py-5">
           <h2 className={`text-center mb-4 ${styles.titulo}`}>Inscríbete a un evento</h2>
 
-         
+
           <form
             onSubmit={manejarInscripcion}
             noValidate
@@ -168,7 +206,7 @@ export default function Comunidad() {
             className={`mx-auto p-4 ${styles.tarjetaBlog}`}
             style={{ maxWidth: 500 }}
           >
-            
+
             <div className="mb-3">
               <label htmlFor="insc-nombre" className="form-label">Nombre</label>
               <input
