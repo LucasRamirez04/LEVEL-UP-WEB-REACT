@@ -5,7 +5,6 @@ import Inicio from "./Inicio";
 import { productosIniciales } from "../../data/productos";
 
 test("Comprobar que se renderizan exactamente 3 productos en ofertas destacadas", () => {
-  // 1. Renderizamos la vista envuelta en MemoryRouter (necesario por los Links del Navbar y Footer)
   render(
     <MemoryRouter>
       <Inicio />
@@ -36,14 +35,14 @@ test("Cambio de estado al agregar producto (Flujo exitoso)", () => {
   const botonesCompra = screen.getAllByRole("button", { name: /añadir al carrito/i });
   fireEvent.click(botonesCompra[0]);
 
-  // 2. Buscamos el componente <Alert> por su rol nativo de accesibilidad
+  // 2. Buscamos el componente Alert por su rol
   const alerta = screen.getByRole("alert");
   expect(alerta).toBeDefined();
 
   // 3. Verificamos que contenga el texto del mensaje
   expect(alerta.textContent).toContain("agregado al carrito");
 
-  // 4. Verificamos que React-Bootstrap le haya puesto la clase según la prop variant={tipoAlerta}
+  // 4. Verificamos que la alerta sea del tipo correspondiente
   expect(alerta.className).toContain("alert-success");
 
   // 5. Verificamos que se guardó en localStorage
