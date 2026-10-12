@@ -23,7 +23,6 @@ export default function Pago() {
   const [estadoSimulacion, setEstadoSimulacion] = useState("exito"); 
   const [resultadoPago, setResultadoPago] = useState(null); 
 
-  // Constantes para implementar alerta reutilizable
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
@@ -38,7 +37,25 @@ export default function Pago() {
   function handleProcesarPago(e) {
     e.preventDefault();
 
+    // 1. Capturamos los datos del formulario (específicamente el correo)
+    const formData = new FormData(e.target);
+    const correoCliente = formData.get("correo") || "Cliente";
+
     if (estadoSimulacion === "exito") {
+      // 2. REGISTRAR LA VENTA EN LOCALSTORAGE
+      const ventasGuardadas = JSON.parse(localStorage.getItem("ventas")) || [];
+      const nuevaVenta = {
+        id: "VT-" + Date.now(), 
+        fecha: new Date().toLocaleString(),
+        cliente: correoCliente,
+        total: totalPagar,
+        productos: carrito // Guardamos el detalle completo del carrito
+      };
+      
+      ventasGuardadas.push(nuevaVenta);
+      localStorage.setItem("ventas", JSON.stringify(ventasGuardadas));
+
+      // 3. Vaciar el carrito y mostrar éxito
       localStorage.setItem("carrito", JSON.stringify([]));
       window.dispatchEvent(new Event("storage"));
       setCarrito([]);
@@ -129,7 +146,7 @@ export default function Pago() {
               <Row className="g-4">
                 <Col lg={7}>
                   
-                  {/* 1. TARJETA: Datos de Pago */}
+                  {/* TARJETA: Datos de Pago */}
                   <Card className={`p-4 text-white mb-4 ${styles.tarjetaPago}`}>
                     <h5 className="text-success mb-3">
                       <i className="bi bi-credit-card-2-front me-2"></i>Datos de Pago
@@ -174,41 +191,23 @@ export default function Pago() {
 
                     <Form.Group className="mb-3">
                       <Form.Label className="small text-secondary">Nombre en la Tarjeta <span className="text-danger">*</span></Form.Label>
-                      <Form.Control
-                        type="text"
-                        size="sm"
-                        placeholder="Ej: Juan Pérez"
-                        required
-                      />
+                      <Form.Control type="text" size="sm" placeholder="Ej: Juan Pérez" required />
                     </Form.Group>
 
                     <Row className="g-2 mb-2">
                       <Col xs={8}>
                         <Form.Label className="small text-secondary">Número de Tarjeta <span className="text-danger">*</span></Form.Label>
-                        <Form.Control
-                          type="text"
-                          size="sm"
-                          placeholder="1234 5678 9101 1121"
-                          required
-                        />
+                        <Form.Control type="text" size="sm" placeholder="1234 5678 9101 1121" required />
                       </Col>
                       <Col xs={4}>
                         <Form.Label className="small text-secondary">CVV <span className="text-danger">*</span></Form.Label>
-                        <Form.Control
-                          type="password"
-                          size="sm"
-                          maxLength={3}
-                          placeholder="123"
-                          required
-                        />
+                        <Form.Control type="password" size="sm" maxLength={3} placeholder="123" required />
                       </Col>
                     </Row>
                   </Card>
 
-                  {/* 2. TARJETA: Información del Cliente y Despacho (AHORA ABAJO) */}
+                  {/* TARJETA: Información del Cliente y Despacho */}
                   <Card className={`p-4 text-white ${styles.tarjetaPago}`}>
-                    
-                    {/* Sección 1: Información del cliente */}
                     <div className="mb-4">
                       <h5 className="text-info fw-bold mb-1">Información del cliente</h5>
                       <p className="small text-secondary mb-3">Completa la siguiente información</p>
@@ -231,8 +230,10 @@ export default function Pago() {
                         <Col md={12}>
                           <Form.Group>
                             <Form.Label className="small text-white-50">Correo <span className="text-danger">*</span></Form.Label>
+                            {/* AQUÍ ESTÁ LA MAGIA DEL CORREO (name y pattern) */}
                             <Form.Control 
                               type="email" 
+                              name="correo"
                               size="sm" 
                               required 
                               pattern="^.+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$"
@@ -243,7 +244,6 @@ export default function Pago() {
                       </Row>
                     </div>
 
-                    {/* Sección 2: Dirección de entrega */}
                     <div className="border-top border-secondary pt-4">
                       <h5 className="text-info fw-bold mb-1">Dirección de entrega de los productos</h5>
                       <p className="small text-secondary mb-3">Ingrese dirección de forma detallada</p>
@@ -296,20 +296,11 @@ export default function Pago() {
                       </Row>
                     </div>
 
-                    {/* El botón de Confirmar Pago se mueve aquí abajo para que sea el último paso del formulario */}
                     <div className="mt-4 border-top border-secondary pt-4">
-                      <Button
-                        type="submit"
-                        variant="success"
-                        className="w-100 fw-bold py-3 fs-5"
-                        disabled={carrito.length === 0}
-                      >
-                        {carrito.length === 0
-                          ? "Carrito Vacío"
-                          : `Confirmar Pago por ${formatearPrecio(totalPagar)}`}
+                      <Button type="submit" variant="success" className="w-100 fw-bold py-3 fs-5" disabled={carrito.length === 0}>
+                        {carrito.length === 0 ? "Carrito Vacío" : `Confirmar Pago por ${formatearPrecio(totalPagar)}`}
                       </Button>
                     </div>
-
                   </Card>
                 </Col>
 

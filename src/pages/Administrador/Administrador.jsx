@@ -39,6 +39,9 @@ const USUARIO_VACIO = {
 export default function Administrador() {
   const [productos, setProductos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  
+  // NUEVO: Estado para las ventas
+  const [ventas, setVentas] = useState([]);
 
   const [formProd, setFormProd] = useState(PRODUCTO_VACIO);
   const [indiceProdEdicion, setIndiceProdEdicion] = useState(-1);
@@ -46,7 +49,10 @@ export default function Administrador() {
   const [formUser, setFormUser] = useState(USUARIO_VACIO);
   const [indiceUserEdicion, setIndiceUserEdicion] = useState(-1);
 
-  // Carga inicial desde localStorage o valores por defecto de productos.js
+  // NUEVO: Calcular ingresos totales automáticamente
+  const ingresosTotales = ventas.reduce((acc, venta) => acc + venta.total, 0);
+
+  // Carga inicial desde localStorage o valores por defecto
   useEffect(() => {
     const productosGuardados = JSON.parse(localStorage.getItem("productos"));
     if (productosGuardados && productosGuardados.length > 0) {
@@ -62,6 +68,12 @@ export default function Administrador() {
     } else {
       setUsuarios(usuarioAdminInicial);
       localStorage.setItem("usuarios", JSON.stringify(usuarioAdminInicial));
+    }
+
+    // NUEVO: Cargar historial de ventas
+    const ventasGuardadas = JSON.parse(localStorage.getItem("ventas"));
+    if (ventasGuardadas && ventasGuardadas.length > 0) {
+      setVentas(ventasGuardadas);
     }
   }, []);
 
@@ -177,7 +189,7 @@ export default function Administrador() {
               <h2 className="text-white mb-0" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                 Panel de Control
               </h2>
-              <small className="text-secondary">Gestión de inventario y usuarios</small>
+              <small className="text-secondary">Gestión de inventario, usuarios y ventas</small>
             </div>
           </div>
 
@@ -215,32 +227,52 @@ export default function Administrador() {
                 <i className="bi bi-people me-2"></i>Usuarios
               </button>
             </li>
+            {/* NUEVA PESTAÑA DE VENTAS */}
+            <li className="nav-item" role="presentation">
+              <button
+                className={`nav-link ${styles.pestanaGamer}`}
+                data-bs-toggle="tab"
+                data-bs-target="#tab-ventas"
+                type="button"
+                role="tab"
+              >
+                <i className="bi bi-currency-dollar me-2"></i>Ventas
+              </button>
+            </li>
           </ul>
 
           <div className="tab-content">
+            
             {/* Dashboard / KPIs */}
             <div className="tab-pane fade show active" id="tab-resumen" role="tabpanel">
               <div className="row g-3">
-                <div className="col-12 col-md-4">
-                  <div className="card bg-dark text-white border-secondary p-3">
+                <div className="col-12 col-md-3">
+                  <div className="card bg-dark text-white border-secondary p-3 shadow">
                     <span className="text-secondary small">Total Productos</span>
                     <h3 className="mt-1 mb-0" style={{ color: "#39FF14" }}>
                       {productos.length}
                     </h3>
                   </div>
                 </div>
-                <div className="col-12 col-md-4">
-                  <div className="card bg-dark text-white border-secondary p-3">
+                <div className="col-12 col-md-3">
+                  <div className="card bg-dark text-white border-secondary p-3 shadow">
                     <span className="text-secondary small">Ofertas Activas</span>
                     <h3 className="text-warning mt-1 mb-0">
                       {productos.filter((p) => p.enOferta).length}
                     </h3>
                   </div>
                 </div>
-                <div className="col-12 col-md-4">
-                  <div className="card bg-dark text-white border-secondary p-3">
+                <div className="col-12 col-md-3">
+                  <div className="card bg-dark text-white border-secondary p-3 shadow">
                     <span className="text-secondary small">Usuarios Registrados</span>
                     <h3 className="text-info mt-1 mb-0">{usuarios.length}</h3>
+                  </div>
+                </div>
+                {/* NUEVA TARJETA KPI: Total Ventas */}
+                <div className="col-12 col-md-3">
+                  <div className="card bg-dark text-white border-success p-3 shadow">
+                    <span className="text-secondary small">Ingresos Totales</span>
+                    <h3 className="text-success mt-1 mb-0">{formatearPrecio(ingresosTotales)}</h3>
                   </div>
                 </div>
               </div>
@@ -250,7 +282,7 @@ export default function Administrador() {
             <div className="tab-pane fade" id="tab-productos" role="tabpanel">
               <div className="row g-4">
                 <div className="col-12 col-xl-4">
-                  <div className="card bg-dark text-white border-secondary p-3">
+                  <div className="card bg-dark text-white border-secondary p-3 shadow">
                     <h5 className="text-success mb-3">
                       <i
                         className={`bi ${
@@ -386,7 +418,7 @@ export default function Administrador() {
                 </div>
 
                 <div className="col-12 col-xl-8">
-                  <div className="table-responsive rounded-3 border border-secondary">
+                  <div className="table-responsive rounded-3 border border-secondary shadow">
                     <table className="table table-dark table-hover mb-0 align-middle">
                       <thead>
                         <tr className="text-secondary small">
@@ -443,7 +475,7 @@ export default function Administrador() {
             <div className="tab-pane fade" id="tab-usuarios" role="tabpanel">
               <div className="row g-4">
                 <div className="col-12 col-xl-4">
-                  <div className="card bg-dark text-white border-secondary p-3">
+                  <div className="card bg-dark text-white border-secondary p-3 shadow">
                     <h5 className="text-info mb-3">
                       <i
                         className={`bi ${
@@ -535,7 +567,7 @@ export default function Administrador() {
                 </div>
 
                 <div className="col-12 col-xl-8">
-                  <div className="table-responsive rounded-3 border border-secondary">
+                  <div className="table-responsive rounded-3 border border-secondary shadow">
                     <table className="table table-dark table-hover mb-0 align-middle">
                       <thead>
                         <tr className="text-secondary small">
@@ -583,6 +615,58 @@ export default function Administrador() {
                 </div>
               </div>
             </div>
+
+            {/* NUEVA PESTAÑA: VENTAS */}
+            <div className="tab-pane fade" id="tab-ventas" role="tabpanel">
+              <div className="card bg-dark border-secondary text-white p-4 shadow-lg">
+                <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
+                  <h4 className="text-info mb-0">Registro de Ventas</h4>
+                </div>
+
+                {ventas.length === 0 ? (
+                  <div className="text-center p-5 text-secondary border border-secondary rounded">
+                    <i className="bi bi-inbox fs-1 d-block mb-3"></i>
+                    <p>No hay ventas registradas aún.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive rounded-3 border border-secondary shadow">
+                    <table className="table table-dark table-hover mb-0 align-middle">
+                      <thead>
+                        <tr className="text-secondary small">
+                          <th>ID VENTA</th>
+                          <th>FECHA</th>
+                          <th>CLIENTE</th>
+                          <th>PRODUCTOS COMPRADOS</th>
+                          <th className="text-end">TOTAL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Usamos slice().reverse() para que la venta más nueva quede arriba */}
+                        {ventas.slice().reverse().map((venta) => (
+                          <tr key={venta.id}>
+                            <td className="text-secondary small fw-bold">{venta.id}</td>
+                            <td>{venta.fecha}</td>
+                            <td>{venta.cliente}</td>
+                            <td>
+                              <ul className="mb-0 list-unstyled small text-info">
+                                {/* Validamos venta.productos por si acaso */}
+                                {venta.productos && venta.productos.map((prod, index) => (
+                                  <li key={index}>• {prod.nombre}</li>
+                                ))}
+                              </ul>
+                            </td>
+                            <td className="text-success fw-bold fs-6 text-end">
+                              {formatearPrecio(venta.total)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+            
           </div>
         </section>
 
