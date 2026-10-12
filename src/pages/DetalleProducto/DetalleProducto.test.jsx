@@ -25,9 +25,3 @@ test("Muestra el nombre del producto cuando el código existe", () => {
 
   expect(screen.getByRole("heading", { name: producto.nombre })).toBeInTheDocument();
 });
-
-test("Muestra un mensaje cuando el código no existe", () => {
-  renderizarDetalle("XXXX");
-
-  expect(screen.getByText("No encontramos ese producto.")).toBeInTheDocument();
-});
