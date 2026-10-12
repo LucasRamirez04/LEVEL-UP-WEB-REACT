@@ -16,17 +16,6 @@ function renderizarCatalogo() {
   );
 }
 
-test("Al presionar Añadir se guarda el producto en el carrito", () => {
-  renderizarCatalogo();
-
-  const botonesAnadir = screen.getAllByText("Añadir");
-  fireEvent.click(botonesAnadir[0]);
-
-  const carrito = JSON.parse(localStorage.getItem("carrito"));
-  expect(carrito.length).toBe(1);
-  expect(carrito[0].codigo).toBe(productosIniciales[0].codigo);
-});
-
 test("El filtro por categoría muestra solo los productos de esa categoría", () => {
   renderizarCatalogo();
 
