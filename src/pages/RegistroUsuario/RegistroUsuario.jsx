@@ -5,6 +5,7 @@ import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import { usuarioAdminInicial } from "../../data/productos";
 import styles from "./RegistroUsuario.module.css";
+import App_alert from "../../components/alerta/alerta";
 
 const COMUNAS_POR_REGION = {
   "Región Metropolitana de Santiago": ["Santiago", "La Florida", "Maipú", "Puente Alto", "Providencia"],
@@ -16,6 +17,17 @@ const REGIONES = Object.keys(COMUNAS_POR_REGION);
 
 export default function RegistroUsuario() {
   const navigate = useNavigate();
+
+  // Estados de la alerta
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState("");
+  const [tipoAlerta, setTipoAlerta] = useState("");
+
+  function mostrarMensaje(mensaje, tipo = "danger") {
+    setMensajeAlerta(mensaje);
+    setTipoAlerta(tipo);
+    setMostrarAlerta(true);
+  }
 
   const [form, setForm] = useState({
     run: "",
@@ -46,48 +58,48 @@ export default function RegistroUsuario() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    if (form.run.trim() === "") return alert("El RUN es requerido.");
+    if (form.run.trim() === "") return mostrarMensaje("El RUN es requerido.", "danger");
     if (form.run.includes(".") || form.run.includes("-"))
-      return alert("El RUN debe ser ingresado sin puntos ni guion.");
+      return mostrarMensaje("El RUN debe ser ingresado sin puntos ni guion.", "danger");
     if (form.run.trim().length < 7 || form.run.trim().length > 9)
-      return alert("El RUN debe tener entre 7 y 9 caracteres.");
+      return mostrarMensaje("El RUN debe tener entre 7 y 9 caracteres.", "danger");
 
-    if (form.nombre.trim() === "") return alert("El nombre es requerido.");
-    if (form.nombre.trim().length > 50) return alert("El nombre no puede tener más de 50 caracteres.");
+    if (form.nombre.trim() === "") return mostrarMensaje("El nombre es requerido.", "danger");
+    if (form.nombre.trim().length > 50) return mostrarMensaje("El nombre no puede tener más de 50 caracteres.", "danger");
 
-    if (form.apellidos.trim() === "") return alert("Los apellidos son requeridos.");
+    if (form.apellidos.trim() === "") return mostrarMensaje("Los apellidos son requeridos.", "danger");
     if (form.apellidos.trim().length > 100)
-      return alert("Los apellidos no pueden tener más de 100 caracteres.");
+      return mostrarMensaje("Los apellidos no pueden tener más de 100 caracteres.", "danger");
 
     const correoLimpio = form.correo.trim().toLowerCase();
-    if (correoLimpio === "") return alert("El correo es requerido.");
-    if (correoLimpio.length > 100) return alert("El correo no puede tener más de 100 caracteres.");
+    if (correoLimpio === "") return mostrarMensaje("El correo es requerido.", "danger");
+    if (correoLimpio.length > 100) return mostrarMensaje("El correo no puede tener más de 100 caracteres.", "danger");
     if (
       !correoLimpio.endsWith("@duoc.cl") &&
       !correoLimpio.endsWith("@profesor.duoc.cl") &&
       !correoLimpio.endsWith("@gmail.com")
     )
-      return alert("El correo solo puede ser @duoc.cl, @profesor.duoc.cl o @gmail.com");
+      return mostrarMensaje("El correo solo puede ser @duoc.cl, @profesor.duoc.cl o @gmail.com", "danger");
 
-    if (form.clave === "") return alert("La contraseña es requerida.");
+    if (form.clave === "") return mostrarMensaje("La contraseña es requerida.", "danger");
     if (form.clave.length < 4 || form.clave.length > 10)
-      return alert("La contraseña debe tener entre 4 y 10 caracteres.");
+      return mostrarMensaje("La contraseña debe tener entre 4 y 10 caracteres.", "danger");
 
-    if (form.confirmarClave === "") return alert("Debe confirmar su contraseña.");
-    if (form.clave !== form.confirmarClave) return alert("Las contraseñas no coinciden.");
+    if (form.confirmarClave === "") return mostrarMensaje("Debe confirmar su contraseña.", "danger");
+    if (form.clave !== form.confirmarClave) return mostrarMensaje("Las contraseñas no coinciden.", "danger");
 
-    if (form.fechaNacimiento === "") return alert("La fecha de nacimiento es requerida.");
+    if (form.fechaNacimiento === "") return mostrarMensaje("La fecha de nacimiento es requerida.", "danger");
     const fechaNac = new Date(form.fechaNacimiento);
     const hoy = new Date();
     const edad = hoy.getFullYear() - fechaNac.getFullYear();
-    if (edad < 18) return alert("Debes ser mayor de 18 años para poder registrarte.");
+    if (edad < 18) return mostrarMensaje("Debes ser mayor de 18 años para poder registrarte.", "danger");
 
-    if (form.region === "") return alert("Debe seleccionar una región.");
-    if (form.comuna === "") return alert("Debe seleccionar una comuna.");
+    if (form.region === "") return mostrarMensaje("Debe seleccionar una región.", "danger");
+    if (form.comuna === "") return mostrarMensaje("Debe seleccionar una comuna.", "danger");
 
-    if (form.direccion.trim() === "") return alert("La dirección es requerida.");
+    if (form.direccion.trim() === "") return mostrarMensaje("La dirección es requerida.", "danger");
     if (form.direccion.trim().length > 300)
-      return alert("La dirección no puede tener más de 300 caracteres.");
+      return mostrarMensaje("La dirección no puede tener más de 300 caracteres.", "danger");
 
     // 1. Obtener lista actual de usuarios desde localStorage
     const usuariosRegistrados =
@@ -96,7 +108,7 @@ export default function RegistroUsuario() {
     // 2. Verificar que no exista un usuario con el mismo RUN o correo
     const runExiste = usuariosRegistrados.some((u) => u.run === form.run.trim());
     if (runExiste) {
-      return alert("Ya existe un usuario registrado con este RUN.");
+      return mostrarMensaje("Ya existe un usuario registrado con este RUN.", "danger");
     }
 
     // 3. Crear el nuevo usuario
@@ -116,7 +128,7 @@ export default function RegistroUsuario() {
     const nuevaLista = [...usuariosRegistrados, nuevoUsuario];
     localStorage.setItem("usuarios", JSON.stringify(nuevaLista));
 
-    alert("¡Registro exitoso! Ya puedes iniciar sesión.");
+    mostrarMensaje("¡Registro exitoso! Ya puedes iniciar sesión.", "success");
     navigate("/login");
   }
 
@@ -124,6 +136,16 @@ export default function RegistroUsuario() {
     <>
       <Navbar />
       <CarritoOffcanvas />
+
+      {/* BORRAR CUANDO SE CREE EL ESTILO CSS DE ALERTA*/}
+      <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}> 
+        <App_alert
+          mostrarAlert={mostrarAlerta} 
+          cerrarAlert={() => setMostrarAlerta(false)} 
+          variant={tipoAlerta} 
+          msgAlert={mensajeAlerta} 
+        />
+      </div>
 
       <main className="container flex-grow-1 mb-5" style={{ marginTop: 120 }}>
         <div className="row justify-content-center">

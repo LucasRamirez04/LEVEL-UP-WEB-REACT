@@ -1,13 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { expect, test, vi, beforeEach } from "vitest";
+import { expect, test } from "vitest";
 import RegistroUsuario from "./RegistroUsuario";
-
-// Configuramos una "Simulación" para las alertas de validación.
-// Usamos vi.fn() para que intercepte los alert logrando que la prueba no se quede pausada
-beforeEach(() => {
-  window.alert = vi.fn(); 
-});
 
 test("Comprobar que se renderiza el título principal del formulario", () => {
   render(
@@ -53,6 +47,6 @@ test("Comprobar que el formulario bloquea el envío y alerta si el RUN está vac
   // Simulamos el clic directo sin llenar ningún dato en el formulario
   fireEvent.click(botonRegistro);
   
-  // Verificamos que la función de validación haya disparado exactamente esta alerta
-  expect(window.alert).toHaveBeenCalledWith("El RUN es requerido.");
+  // Verificamos que se muestre la alerta en pantalla con el mensaje correspondiente
+  expect(screen.getByText("El RUN es requerido.")).toBeInTheDocument();
 });
