@@ -5,11 +5,17 @@ import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import { usuarioAdminInicial } from "../../data/productos";
 import styles from "./InicioSesion.module.css";
+import App_alert from "../../components/alerta/alerta";
 
 export default function InicioSesion() {
   const [correo, setCorreo] = useState("");
   const [clave, setClave] = useState("");
   const navigate = useNavigate();
+
+  // Constantes para implementar alerta
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState("");
+  const [tipoAlerta, setTipoAlerta] = useState("");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -18,11 +24,15 @@ export default function InicioSesion() {
     const claveLimpia = clave.trim();
 
     if (!correoLimpio) {
-      alert("El correo es requerido.");
+      setMostrarAlerta(true);
+      setMensajeAlerta("El correo es requerido.");
+      setTipoAlerta("danger");
       return;
     }
     if (!claveLimpia) {
-      alert("La contraseña es requerida.");
+      setMostrarAlerta(true);
+      setMensajeAlerta("La contraseña es requerida.");
+      setTipoAlerta("danger");
       return;
     }
 
@@ -44,10 +54,14 @@ export default function InicioSesion() {
       // 4. Notifica al Navbar para actualizar nombre y botón de salida
       window.dispatchEvent(new Event("storage"));
 
-      alert("¡Bienvenido " + usuarioEncontrado.nombre + "!");
+      setMostrarAlerta(true);
+      setMensajeAlerta("¡Bienvenido " + usuarioEncontrado.nombre + "!");
+      setTipoAlerta("success");
       navigate("/");
     } else {
-      alert("Correo o contraseña incorrectos.");
+      setMostrarAlerta(true);
+      setMensajeAlerta("Correo o contraseña incorrectos.");
+      setTipoAlerta("danger");
     }
   }
 
@@ -55,6 +69,16 @@ export default function InicioSesion() {
     <>
       <Navbar />
       <CarritoOffcanvas />
+
+      {/* Contenedor flotante para no desarmar el layout */}
+      <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
+        <App_alert
+          mostrarAlert={mostrarAlerta}
+          cerrarAlert={() => setMostrarAlerta(false)}
+          variant={tipoAlerta}
+          msgAlert={mensajeAlerta}
+        />
+      </div>
 
       <main className="container flex-grow-1 mb-5" style={{ marginTop: 120 }}>
         <div className="row justify-content-center">
