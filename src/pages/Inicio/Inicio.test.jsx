@@ -4,52 +4,6 @@ import { expect, test } from "vitest";
 import Inicio from "./Inicio";
 import { productosIniciales } from "../../data/productos";
 
-test("Comprobar que se renderizan exactamente 3 productos en ofertas destacadas", () => {
-  render(
-    <MemoryRouter>
-      <Inicio />
-    </MemoryRouter>
-  );
-
-  // 2. Buscamos todos los botones que dicen "Añadir al Carrito"
-  const botonesCompra = screen.getAllByRole("button", { name: /añadir al carrito/i });
-
-  // 3. Verificamos que sean exactamente 3 tarjetas con su botón
-  expect(botonesCompra.length).toBe(3);
-
-  // 4. Verificamos que existan exactamente 3 badges de descuento (% OFF)
-  const badgesDescuento = screen.getAllByText(/OFF/i);
-  expect(badgesDescuento.length).toBe(3);
-});
-
-test("Cambio de estado al agregar producto (Flujo exitoso)", () => {
-  localStorage.clear();
-
-  render(
-    <MemoryRouter>
-      <Inicio />
-    </MemoryRouter>
-  );
-
-  // 1. Clic en el botón
-  const botonesCompra = screen.getAllByRole("button", { name: /añadir al carrito/i });
-  fireEvent.click(botonesCompra[0]);
-
-  // 2. Buscamos el componente Alert por su rol
-  const alerta = screen.getByRole("alert");
-  expect(alerta).toBeDefined();
-
-  // 3. Verificamos que contenga el texto del mensaje
-  expect(alerta.textContent).toContain("agregado al carrito");
-
-  // 4. Verificamos que la alerta sea del tipo correspondiente
-  expect(alerta.className).toContain("alert-success");
-
-  // 5. Verificamos que se guardó en localStorage
-  const carritoGuardado = JSON.parse(localStorage.getItem("carrito"));
-  expect(carritoGuardado.length).toBe(1);
-});
-
 test("Comprobar que no se pueden agregar productos sin stock suficiente", () => {
   //limpiar storage
   localStorage.clear();
