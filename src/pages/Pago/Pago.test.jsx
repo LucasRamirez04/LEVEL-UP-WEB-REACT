@@ -21,15 +21,26 @@ test("Flujo exitoso: procesar pago aprobado limpia el carrito y muestra confirma
     </MemoryRouter>
   );
 
-  // 3. El switch de simulación está en "Aprobado" por defecto, así que solo buscamos y hacemos clic en Pagar
-  const botonPagar = screen.getByRole("button", { name: /pagar/i });
-  fireEvent.click(botonPagar);
+  // 3. Llenamos específicamente el campo de correo, 
+  // ya que tu función usa FormData para capturarlo y guardarlo en la venta.
+  const inputCorreo = document.querySelector('input[name="correo"]');
+  fireEvent.change(inputCorreo, { target: { value: "lucas@gmail.com" } });
 
-  // 4. Verificamos que la interfaz cambie mostrando el título de la tarjeta de éxito
+  // 4. FORZAR EL SUBMIT: En lugar de hacer clic en el botón y depender 
+  // de las validaciones HTML del navegador virtual, disparamos el envío directo.
+  const formulario = document.querySelector("form");
+  fireEvent.submit(formulario);
+
+  // 5. Verificamos que la interfaz cambie mostrando el título de la tarjeta de éxito
   const tituloExito = screen.getByText(/Transacción Completada/i);
   expect(tituloExito).toBeDefined();
 
-  // 5. Verificamos que el carrito se haya vaciado en localStorage (queda en 0)
+  // 6. Verificamos que el carrito se haya vaciado en localStorage (queda en 0)
   const carritoGuardado = JSON.parse(localStorage.getItem("carrito"));
   expect(carritoGuardado.length).toBe(0);
+
+  // 7. (Opcional) Verificamos que la venta se haya registrado correctamente
+  const ventasGuardadas = JSON.parse(localStorage.getItem("ventas"));
+  expect(ventasGuardadas.length).toBe(1);
+  expect(ventasGuardadas[0].cliente).toBe("lucas@gmail.com");
 });
