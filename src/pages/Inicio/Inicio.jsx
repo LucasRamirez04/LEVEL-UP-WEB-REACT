@@ -32,9 +32,6 @@ export default function Inicio() {
       .slice(0, 3);
   }, [productos]);
 
-  // Guarda en localStorage directamente sin depender de Context
-// En src/pages/Home/Home.jsx
-
 const agregarAlCarrito = (producto, precioFinal) => {
   // 1. Obtener los productos que ya están en el carrito
   const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
@@ -77,7 +74,6 @@ const agregarAlCarrito = (producto, precioFinal) => {
     <>
       <Navbar />
       <CarritoOffcanvas />
-      {/* Contenedor flotante para no desarmar el layout */}
     <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
       <App_alert
         mostrarAlert={mostrarAlerta}
