@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.css";
+import { cerrarSesion, estaLogueado, getUsuario } from "../../auth/auth";
 
 function claseEnlace({ isActive }) {
   return `nav-link ${styles.enlaceMenu} ${isActive ? "active" : ""}`;
@@ -10,10 +11,12 @@ export default function Navbar() {
   const [usuarioActivo, setUsuarioActivo] = useState(null);
   const [cantidadCarrito, setCantidadCarrito] = useState(0);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const sincronizarDatos = () => {
-    // 1. Obtiene usuario de localStorage
-    const usuarioGuardado = JSON.parse(localStorage.getItem("usuarioActivo"));
-    setUsuarioActivo(usuarioGuardado || null);
+    // 1. Obtiene usuario desde auth.js solo si existe un token valido
+    setUsuarioActivo(estaLogueado() ? getUsuario() : null);
 
     // 2. Obtiene productos del carrito de localStorage
     const carritoGuardado = JSON.parse(localStorage.getItem("carrito")) || [];
@@ -28,13 +31,15 @@ export default function Navbar() {
     return () => {
       window.removeEventListener("storage", sincronizarDatos);
     };
-  }, []);
+  }, [location.pathname]);
 
-  const cerrarSesion = () => {
-    localStorage.removeItem("usuarioActivo");
+  const handleCerrarSesion = () => {
+    cerrarSesion();
     setUsuarioActivo(null);
-    window.location.reload();
+    navigate("/");
   };
+
+  const esAdmin = usuarioActivo?.rol?.toUpperCase() === "ADMINISTRADOR";
 
   return (
     <header className="cabecera-principal">
@@ -81,21 +86,26 @@ export default function Navbar() {
                   Contacto
                 </NavLink>
               </li>
-              <li className="nav-item">
+              {/* 1. Ocultar Administrador si no es admin */}
+              {esAdmin &&(
+                <li className="nav-item">
                 <NavLink to="/administrador" className={claseEnlace}>
                   Administrador
                 </NavLink>
               </li>
+              )}
             </ul>
 
             <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
               {usuarioActivo ? (
                 <li className="nav-item d-flex align-items-center gap-2">
-                  <span className="text-white small">{usuarioActivo.nombre}</span>
+                  <span className="text-white small">
+                    {usuarioActivo.nombre || usuarioActivo.correo}
+                  </span>
                   <button
                     className="btn btn-sm btn-outline-danger py-0"
                     type="button"
-                    onClick={cerrarSesion}
+                    onClick={handleCerrarSesion}
                   >
                     Salir
                   </button>
