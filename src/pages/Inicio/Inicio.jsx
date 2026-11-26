@@ -2,81 +2,82 @@ import { useMemo, useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import { calcularPrecioFinal, formatearPrecio } from "../../data/productos";
+import { formatearPrecio } from "../../data/productos";
 import styles from "./Inicio.module.css";
 import App_alert from "../../components/alerta/alerta";
 import { obtenerProductos } from "../../api/productoApi";
 
 export default function Inicio() {
   const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true)
+  const [cargando, setCargando] = useState(true);
 
-  //constantes para implementar alerta
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
 
-  // Carga los productos desde el backend (GET/ api/v1/productos/listar)
   useEffect(() => {
     const cargarProductos = async () => {
       try {
         const data = await obtenerProductos();
-        setProductos(data);
+        setProductos(data || []);
       } catch {
         setMostrarAlerta(true);
-        setMensajeAlerta("No se pudieron cargar los productos")
-        setTipoAlerta("danger")
+        setMensajeAlerta("No se pudieron cargar los productos");
+        setTipoAlerta("danger");
       } finally {
-        setCargando(false)
+        setCargando(false);
       }
     };
     cargarProductos();
   }, []);
 
-  // Top 3 ofertas con mayor descuento
+  // Top 3 ofertas con mayor porcentaje_producto
   const ofertasEspeciales = useMemo(() => {
     return productos
-      .filter((p) => p.enOferta)
-      .sort((a, b) => b.descuento - a.descuento)
+      .filter((p) => p.porcentaje_producto > 0)
+      .sort((a, b) => b.porcentaje_producto - a.porcentaje_producto)
       .slice(0, 3);
   }, [productos]);
 
+  const calcularPrecioConDescuento = (producto) => {
+    if (!producto.porcentaje_producto) return producto.precio_producto;
+    return Math.round(
+      producto.precio_producto * (1 - producto.porcentaje_producto / 100)
+    );
+  };
+
   const agregarAlCarrito = (producto, precioFinal) => {
-    // 1. Obtener los productos que ya están en el carrito
     const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
 
-    // 2. Contar cuántas veces se ha agregado ESTE producto específico al carrito
     const cantidadEnCarrito = carritoActual.filter(
-      (item) => item.codigo === producto.codigo
+      (item) => item.codigo === producto.codigo_producto
     ).length;
 
-    // 3. Validar si supera el stock del producto
-    if (cantidadEnCarrito >= producto.stock) {
+    if (cantidadEnCarrito >= producto.stock_producto) {
       setMostrarAlerta(true);
-      setMensajeAlerta(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
-      setTipoAlerta("danger")
-      //alert(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
+      setMensajeAlerta(
+        `No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre_producto}" es de ${producto.stock_producto}.`
+      );
+      setTipoAlerta("danger");
       return;
     }
 
-    // 4. Si hay stock disponible, creamos el item y lo guardamos
     const itemAAgregar = {
-      codigo: producto.codigo,
-      nombre: producto.nombre,
+      codigo: producto.codigo_producto,
+      codigo_producto: producto.codigo_producto,
+      nombre: producto.nombre_producto,
       precio: precioFinal,
-      imagen: producto.imagen,
+      imagen: producto.imagen_producto,
     };
 
     const nuevoCarrito = [...carritoActual, itemAAgregar];
     localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
 
-    // 5. Notificar al Navbar para actualizar el badge de contador
     window.dispatchEvent(new Event("storage"));
 
     setMostrarAlerta(true);
-    setMensajeAlerta(`"${producto.nombre}" agregado al carrito.`);
-    setTipoAlerta("success")
-    //alert(`"${producto.nombre}" agregado al carrito.`);
+    setMensajeAlerta(`"${producto.nombre_producto}" agregado al carrito.`);
+    setTipoAlerta("success");
   };
 
   return (
@@ -91,6 +92,7 @@ export default function Inicio() {
           msgAlert={mensajeAlerta}
         />
       </div>
+
       <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
         <section id="sec-ofertas" className="py-5">
           <div className="container">
@@ -106,23 +108,21 @@ export default function Inicio() {
             ) : ofertasEspeciales.length === 0 ? (
               <p className="text-secondary">No hay ofertas disponibles en este momento</p>
             ) : (
-
-
               <div className="row g-4">
                 {ofertasEspeciales.map((producto) => {
-                  const precioFinal = calcularPrecioFinal(producto);
+                  const precioFinal = calcularPrecioConDescuento(producto);
                   return (
-                    <div className="col-12 col-md-4" key={producto.codigo}>
+                    <div className="col-12 col-md-4" key={producto.codigo_producto}>
                       <div className="card h-100 bg-dark text-white border-secondary position-relative overflow-hidden">
                         <span
                           className="badge position-absolute top-0 end-0 m-2 px-2 py-1"
                           style={{ backgroundColor: "#39FF14", color: "#000000", fontWeight: "bold" }}
                         >
-                          -{producto.descuento}% OFF
+                          -{producto.porcentaje_producto}% OFF
                         </span>
                         <img
-                          src={producto.imagen}
-                          alt={producto.nombre}
+                          src={producto.imagen_producto}
+                          alt={producto.nombre_producto}
                           className="card-img-top"
                           style={{
                             height: 250,
@@ -132,10 +132,10 @@ export default function Inicio() {
                           }}
                         />
                         <div className="card-body d-flex flex-column">
-                          <h5 className="card-title">{producto.nombre}</h5>
+                          <h5 className="card-title">{producto.nombre_producto}</h5>
                           <div className="my-2">
                             <small className="text-decoration-line-through text-secondary me-2">
-                              {formatearPrecio(producto.precio)}
+                              {formatearPrecio(producto.precio_producto)}
                             </small>
                             <span className="fw-bold fs-5" style={{ color: "#39FF14" }}>
                               {formatearPrecio(precioFinal)}
@@ -151,7 +151,6 @@ export default function Inicio() {
                         </div>
                       </div>
                     </div>
-
                   );
                 })}
               </div>
