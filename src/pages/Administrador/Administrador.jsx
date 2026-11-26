@@ -2,148 +2,168 @@ import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import {
-  productosIniciales,
-  usuarioAdminInicial,
-  formatearPrecio,
-} from "../../data/productos";
+import { formatearPrecio } from "../../data/productos";
+import { obtenerProductos, agregarProducto, actualizarProducto, eliminarProducto,} from "../../api/productoApi";
+import { obtenerCategorias } from "../../api/categoriaApi";
+import {listarUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario,} from "../../api/usuariosApi";
+import { obtenerVentas } from "../../api/ventasApi";
+import { obtenerDetallesVenta } from "../../api/detalleVentaApi";
 import styles from "./Administrador.module.css";
 
-const CATEGORIAS = [
-  "Juegos de Mesa",
-  "Accesorios",
-  "Consolas/Computadores",
-  "Perifericos",
-  "Vestuario",
-];
-
 const PRODUCTO_VACIO = {
-  codigo: "",
-  nombre: "",
-  categoria: "",
-  precio: "",
-  stock: 10,
-  descuento: 0,
-  enOferta: false,
-  imagen: "",
+  nombre_producto: "",
+  descripcion_producto: "",
+  id_categoria: "",
+  precio_producto: "",
+  stock_producto: 10,
+  porcentaje_producto: 0,
+  imagen_producto: "",
 };
 
 const USUARIO_VACIO = {
   run: "",
-  nombre: "",
+  nombres: "",
   apellidos: "",
   correo: "",
-  rol: "Cliente",
+  contrasena: "",
+  fecha_nacimiento: "",
+  direccion: "",
+  rol: "CLIENTE",
 };
 
 export default function Administrador() {
   const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
-  
-  //Estado para las ventas
   const [ventas, setVentas] = useState([]);
+  const [detallesVenta, setDetallesVenta] = useState([]);
+
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
   const [formProd, setFormProd] = useState(PRODUCTO_VACIO);
-  const [indiceProdEdicion, setIndiceProdEdicion] = useState(-1);
+  const [idProdEdicion, setIdProdEdicion] = useState(null);
 
   const [formUser, setFormUser] = useState(USUARIO_VACIO);
-  const [indiceUserEdicion, setIndiceUserEdicion] = useState(-1);
+  const [idUserEdicion, setIdUserEdicion] = useState(null);
 
-  //Calcular ingresos totales automáticamente
-  const ingresosTotales = ventas.reduce((acc, venta) => acc + venta.total, 0);
+  const ingresosTotales = ventas.reduce((acc, venta) => acc + (venta.total || 0), 0);
 
-  //Carga inicial desde localStorage o valores por defecto
+  const cargarTodo = async () => {
+    setCargando(true);
+    setError("");
+    try {
+      const [prodsData, catsData, usersData, ventasData, detallesData] = await Promise.all([
+        obtenerProductos(),
+        obtenerCategorias(),
+        listarUsuarios(),
+        obtenerVentas(),
+        obtenerDetallesVenta(),
+      ]);
+      setProductos(prodsData || []);
+      setCategorias(catsData || []);
+      setUsuarios(usersData || []);
+      setVentas(ventasData || []);
+      setDetallesVenta(detallesData || []);
+    } catch {
+      setError("No se pudieron cargar los datos del panel. Verifica tu sesión de Administrador.");
+    } finally {
+      setCargando(false);
+    }
+  };
+
   useEffect(() => {
-    const productosGuardados = JSON.parse(localStorage.getItem("productos"));
-    if (productosGuardados && productosGuardados.length > 0) {
-      setProductos(productosGuardados);
-    } else {
-      setProductos(productosIniciales);
-      localStorage.setItem("productos", JSON.stringify(productosIniciales));
-    }
-
-    const usuariosGuardados = JSON.parse(localStorage.getItem("usuarios"));
-    if (usuariosGuardados && usuariosGuardados.length > 0) {
-      setUsuarios(usuariosGuardados);
-    } else {
-      setUsuarios(usuarioAdminInicial);
-      localStorage.setItem("usuarios", JSON.stringify(usuarioAdminInicial));
-    }
-
-    
-    const ventasGuardadas = JSON.parse(localStorage.getItem("ventas"));
-    if (ventasGuardadas && ventasGuardadas.length > 0) {
-      setVentas(ventasGuardadas);
-    }
+    cargarTodo();
   }, []);
 
-  // ---------- Manejo de Productos con LocalStorage ----------
-  function guardarProductosEnStorage(nuevaLista) {
-    setProductos(nuevaLista);
-    localStorage.setItem("productos", JSON.stringify(nuevaLista));
-  }
-
-  function iniciarEdicionProducto(index) {
-    setFormProd(productos[index]);
-    setIndiceProdEdicion(index);
+  // ---------- Manejo de Productos con API ----------
+  function iniciarEdicionProducto(prod) {
+    setFormProd({
+      nombre_producto: prod.nombre_producto || "",
+      descripcion_producto: prod.descripcion_producto || "",
+      id_categoria: prod.categoria?.id_categoria ?? "",
+      precio_producto: prod.precio_producto ?? "",
+      stock_producto: prod.stock_producto ?? 0,
+      porcentaje_producto: prod.porcentaje_producto ?? 0,
+      imagen_producto: prod.imagen_producto || "",
+    });
+    setIdProdEdicion(prod.codigo_producto);
   }
 
   function resetearFormularioProd() {
     setFormProd(PRODUCTO_VACIO);
-    setIndiceProdEdicion(-1);
+    setIdProdEdicion(null);
   }
 
-  function handleSubmitProducto(e) {
+  async function handleSubmitProducto(e) {
     e.preventDefault();
+    setError("");
+
     const datos = {
-      ...formProd,
-      precio: parseFloat(formProd.precio),
-      stock: parseInt(formProd.stock),
-      descuento: parseInt(formProd.descuento) || 0,
-      imagen: formProd.imagen || "/img/catan.jpg",
+      nombre_producto: formProd.nombre_producto.trim(),
+      descripcion_producto: formProd.descripcion_producto.trim(),
+      precio_producto: parseInt(formProd.precio_producto, 10),
+      stock_producto: parseInt(formProd.stock_producto, 10),
+      porcentaje_producto: parseInt(formProd.porcentaje_producto, 10) || 0,
+      imagen_producto: formProd.imagen_producto.trim() || "/img/catan.jpg",
+      categoria: {
+        id_categoria: parseInt(formProd.id_categoria, 10),
+      },
     };
 
-    let listaActualizada;
-    if (indiceProdEdicion === -1) {
-      listaActualizada = [...productos, datos];
-    } else {
-      listaActualizada = productos.map((prod, idx) =>
-        idx === indiceProdEdicion ? datos : prod
-      );
+    try {
+      if (idProdEdicion === null) {
+        await agregarProducto(datos);
+      } else {
+        await actualizarProducto(idProdEdicion, datos);
+      }
+      const listaActualizada = await obtenerProductos();
+      setProductos(listaActualizada || []);
+      resetearFormularioProd();
+    } catch {
+      setError("Error al guardar el producto.");
     }
-
-    guardarProductosEnStorage(listaActualizada);
-    resetearFormularioProd();
   }
 
-  function handleEliminarProducto(index) {
-    if (confirm("¿Deseas eliminar este producto?")) {
-      const listaActualizada = productos.filter((_, idx) => idx !== index);
-      guardarProductosEnStorage(listaActualizada);
-      if (indiceProdEdicion === index) {
+  async function handleEliminarProducto(prod) {
+    if (!confirm("¿Deseas eliminar este producto?")) return;
+    setError("");
+
+    try {
+      await eliminarProducto(prod.codigo_producto);
+      const listaActualizada = await obtenerProductos();
+      setProductos(listaActualizada || []);
+      if (idProdEdicion === prod.codigo_producto) {
         resetearFormularioProd();
       }
+    } catch {
+      setError("Error al eliminar el producto. Puede estar asociado a una venta.");
     }
   }
 
-  // ---------- Manejo de Usuarios con LocalStorage ----------
-  function guardarUsuariosEnStorage(nuevaLista) {
-    setUsuarios(nuevaLista);
-    localStorage.setItem("usuarios", JSON.stringify(nuevaLista));
-  }
-
-  function iniciarEdicionUsuario(index) {
-    setFormUser(usuarios[index]);
-    setIndiceUserEdicion(index);
+  // ---------- Manejo de Usuarios con API ----------
+  function iniciarEdicionUsuario(usr) {
+    setFormUser({
+      run: usr.run || "",
+      nombres: usr.nombres || "",
+      apellidos: usr.apellidos || "",
+      correo: usr.correo || "",
+      contrasena: "",
+      fecha_nacimiento: usr.fecha_nacimiento || "",
+      direccion: usr.direccion || "",
+      rol: usr.rol || "CLIENTE",
+    });
+    setIdUserEdicion(usr.id_usuario);
   }
 
   function resetearFormularioUser() {
     setFormUser(USUARIO_VACIO);
-    setIndiceUserEdicion(-1);
+    setIdUserEdicion(null);
   }
 
-  function handleSubmitUsuario(e) {
+  async function handleSubmitUsuario(e) {
     e.preventDefault();
+    setError("");
 
     const correo = formUser.correo.trim().toLowerCase();
     const dominiosValidos = ["@duoc.cl", "@profesor.duoc.cl", "@gmail.com"];
@@ -153,27 +173,37 @@ export default function Administrador() {
     }
 
     const datos = { ...formUser, correo };
-
-    let listaActualizada;
-    if (indiceUserEdicion === -1) {
-      listaActualizada = [...usuarios, datos];
-    } else {
-      listaActualizada = usuarios.map((user, idx) =>
-        idx === indiceUserEdicion ? datos : user
-      );
+    if (idUserEdicion !== null && !datos.contrasena) {
+      delete datos.contrasena;
     }
 
-    guardarUsuariosEnStorage(listaActualizada);
-    resetearFormularioUser();
+    try {
+      if (idUserEdicion === null) {
+        await crearUsuario(datos);
+      } else {
+        await actualizarUsuario(idUserEdicion, datos);
+      }
+      const listaActualizada = await listarUsuarios();
+      setUsuarios(listaActualizada || []);
+      resetearFormularioUser();
+    } catch {
+      setError("Error al guardar el usuario. Verifica que los datos sean válidos.");
+    }
   }
 
-  function handleEliminarUsuario(index) {
-    if (confirm("¿Deseas eliminar este usuario?")) {
-      const listaActualizada = usuarios.filter((_, idx) => idx !== index);
-      guardarUsuariosEnStorage(listaActualizada);
-      if (indiceUserEdicion === index) {
+  async function handleEliminarUsuario(usr) {
+    if (!confirm("¿Deseas eliminar este usuario?")) return;
+    setError("");
+
+    try {
+      await eliminarUsuario(usr.id_usuario);
+      const listaActualizada = await listarUsuarios();
+      setUsuarios(listaActualizada || []);
+      if (idUserEdicion === usr.id_usuario) {
         resetearFormularioUser();
       }
+    } catch {
+      setError("Error al eliminar el usuario. Puede tener ventas asociadas.");
     }
   }
 
@@ -192,6 +222,14 @@ export default function Administrador() {
               <small className="text-secondary">Gestión de inventario, usuarios y ventas</small>
             </div>
           </div>
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {cargando && <p className="text-secondary">Cargando datos del panel...</p>}
 
           <ul className="nav nav-tabs border-secondary mb-4" role="tablist">
             <li className="nav-item" role="presentation">
@@ -227,7 +265,6 @@ export default function Administrador() {
                 <i className="bi bi-people me-2"></i>Usuarios
               </button>
             </li>
-            {/* NUEVA PESTAÑA DE VENTAS */}
             <li className="nav-item" role="presentation">
               <button
                 className={`nav-link ${styles.pestanaGamer}`}
@@ -242,7 +279,6 @@ export default function Administrador() {
           </ul>
 
           <div className="tab-content">
-            
             {/* Dashboard / KPIs */}
             <div className="tab-pane fade show active" id="tab-resumen" role="tabpanel">
               <div className="row g-3">
@@ -258,7 +294,7 @@ export default function Administrador() {
                   <div className="card bg-dark text-white border-secondary p-3 shadow">
                     <span className="text-secondary small">Ofertas Activas</span>
                     <h3 className="text-warning mt-1 mb-0">
-                      {productos.filter((p) => p.enOferta).length}
+                      {productos.filter((p) => p.porcentaje_producto > 0).length}
                     </h3>
                   </div>
                 </div>
@@ -268,7 +304,6 @@ export default function Administrador() {
                     <h3 className="text-info mt-1 mb-0">{usuarios.length}</h3>
                   </div>
                 </div>
-                {/* NUEVA TARJETA KPI: Total Ventas */}
                 <div className="col-12 col-md-3">
                   <div className="card bg-dark text-white border-success p-3 shadow">
                     <span className="text-secondary small">Ingresos Totales</span>
@@ -286,23 +321,12 @@ export default function Administrador() {
                     <h5 className="text-success mb-3">
                       <i
                         className={`bi ${
-                          indiceProdEdicion === -1 ? "bi-plus-circle" : "bi-pencil-square"
+                          idProdEdicion === null ? "bi-plus-circle" : "bi-pencil-square"
                         } me-2`}
                       ></i>
-                      {indiceProdEdicion === -1 ? "Nuevo Producto" : "Editar Producto"}
+                      {idProdEdicion === null ? "Nuevo Producto" : `Editar Producto #${idProdEdicion}`}
                     </h5>
                     <form onSubmit={handleSubmitProducto}>
-                      <div className="mb-2">
-                        <label className="form-label small text-secondary">Código *</label>
-                        <input
-                          type="text"
-                          className="form-control form-control-sm"
-                          required
-                          minLength={3}
-                          value={formProd.codigo}
-                          onChange={(e) => setFormProd({ ...formProd, codigo: e.target.value })}
-                        />
-                      </div>
                       <div className="mb-2">
                         <label className="form-label small text-secondary">Nombre *</label>
                         <input
@@ -310,8 +334,22 @@ export default function Administrador() {
                           className="form-control form-control-sm"
                           required
                           maxLength={100}
-                          value={formProd.nombre}
-                          onChange={(e) => setFormProd({ ...formProd, nombre: e.target.value })}
+                          value={formProd.nombre_producto}
+                          onChange={(e) =>
+                            setFormProd({ ...formProd, nombre_producto: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="form-label small text-secondary">Descripción *</label>
+                        <textarea
+                          className="form-control form-control-sm"
+                          rows={2}
+                          required
+                          value={formProd.descripcion_producto}
+                          onChange={(e) =>
+                            setFormProd({ ...formProd, descripcion_producto: e.target.value })
+                          }
                         />
                       </div>
                       <div className="mb-2">
@@ -319,13 +357,15 @@ export default function Administrador() {
                         <select
                           className="form-select form-select-sm"
                           required
-                          value={formProd.categoria}
-                          onChange={(e) => setFormProd({ ...formProd, categoria: e.target.value })}
+                          value={formProd.id_categoria}
+                          onChange={(e) =>
+                            setFormProd({ ...formProd, id_categoria: e.target.value })
+                          }
                         >
                           <option value="">Seleccionar...</option>
-                          {CATEGORIAS.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
+                          {categorias.map((c) => (
+                            <option key={c.id_categoria} value={c.id_categoria}>
+                              {c.nombre_categoria}
                             </option>
                           ))}
                         </select>
@@ -338,9 +378,10 @@ export default function Administrador() {
                             className="form-control form-control-sm"
                             required
                             min="0"
-                            step="any"
-                            value={formProd.precio}
-                            onChange={(e) => setFormProd({ ...formProd, precio: e.target.value })}
+                            value={formProd.precio_producto}
+                            onChange={(e) =>
+                              setFormProd({ ...formProd, precio_producto: e.target.value })
+                            }
                           />
                         </div>
                         <div className="col-6">
@@ -350,60 +391,51 @@ export default function Administrador() {
                             className="form-control form-control-sm"
                             required
                             min="0"
-                            value={formProd.stock}
-                            onChange={(e) => setFormProd({ ...formProd, stock: e.target.value })}
+                            value={formProd.stock_producto}
+                            onChange={(e) =>
+                              setFormProd({ ...formProd, stock_producto: e.target.value })
+                            }
                           />
-                        </div>
-                      </div>
-                      <div className="row g-2 mb-2">
-                        <div className="col-6">
-                          <label className="form-label small text-secondary">Descuento (%)</label>
-                          <input
-                            type="number"
-                            className="form-control form-control-sm"
-                            min="0"
-                            max="100"
-                            value={formProd.descuento}
-                            onChange={(e) => setFormProd({ ...formProd, descuento: e.target.value })}
-                          />
-                        </div>
-                        <div className="col-6 d-flex align-items-end pb-1">
-                          <div className="form-check">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              id="prod-enOferta"
-                              checked={formProd.enOferta}
-                              onChange={(e) =>
-                                setFormProd({ ...formProd, enOferta: e.target.checked })
-                              }
-                            />
-                            <label className="form-check-label small text-white" htmlFor="prod-enOferta">
-                              ¿En Oferta?
-                            </label>
-                          </div>
                         </div>
                       </div>
                       <div className="mb-2">
-                        <label className="form-label small text-secondary">Ruta Imagen</label>
+                        <label className="form-label small text-secondary">
+                          Descuento (%) — 0 si no está en oferta
+                        </label>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm"
+                          min="0"
+                          max="100"
+                          value={formProd.porcentaje_producto}
+                          onChange={(e) =>
+                            setFormProd({ ...formProd, porcentaje_producto: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="form-label small text-secondary">Ruta Imagen *</label>
                         <input
                           type="text"
                           className="form-control form-control-sm"
                           placeholder="/img/catan.jpg"
-                          value={formProd.imagen}
-                          onChange={(e) => setFormProd({ ...formProd, imagen: e.target.value })}
+                          required
+                          value={formProd.imagen_producto}
+                          onChange={(e) =>
+                            setFormProd({ ...formProd, imagen_producto: e.target.value })
+                          }
                         />
                       </div>
                       <div className="d-flex gap-2 mt-3">
                         <button
                           type="submit"
                           className={`btn btn-sm flex-grow-1 ${
-                            indiceProdEdicion === -1 ? "btn-success" : "btn-warning"
+                            idProdEdicion === null ? "btn-success" : "btn-warning"
                           }`}
                         >
-                          {indiceProdEdicion === -1 ? "Guardar" : "Actualizar"}
+                          {idProdEdicion === null ? "Guardar" : "Actualizar"}
                         </button>
-                        {indiceProdEdicion !== -1 && (
+                        {idProdEdicion !== null && (
                           <button
                             type="button"
                             className="btn btn-sm btn-secondary"
@@ -422,7 +454,7 @@ export default function Administrador() {
                     <table className="table table-dark table-hover mb-0 align-middle">
                       <thead>
                         <tr className="text-secondary small">
-                          <th>CÓDIGO</th>
+                          <th>ID</th>
                           <th>NOMBRE</th>
                           <th>CATEGORÍA</th>
                           <th>PRECIO</th>
@@ -432,17 +464,17 @@ export default function Administrador() {
                         </tr>
                       </thead>
                       <tbody>
-                        {productos.map((prod, index) => (
-                          <tr key={prod.codigo + index}>
-                            <td className="fw-bold text-success">{prod.codigo}</td>
-                            <td>{prod.nombre}</td>
-                            <td>{prod.categoria}</td>
-                            <td>{formatearPrecio(prod.precio)}</td>
-                            <td>{prod.stock}</td>
+                        {productos.map((prod) => (
+                          <tr key={prod.codigo_producto}>
+                            <td className="fw-bold text-success">{prod.codigo_producto}</td>
+                            <td>{prod.nombre_producto}</td>
+                            <td>{prod.categoria?.nombre_categoria || "-"}</td>
+                            <td>{formatearPrecio(prod.precio_producto)}</td>
+                            <td>{prod.stock_producto}</td>
                             <td>
-                              {prod.enOferta ? (
+                              {prod.porcentaje_producto > 0 ? (
                                 <span className="badge bg-success text-dark">
-                                  -{prod.descuento}%
+                                  -{prod.porcentaje_producto}%
                                 </span>
                               ) : (
                                 <span className="badge bg-secondary">No</span>
@@ -451,13 +483,13 @@ export default function Administrador() {
                             <td className="text-end">
                               <button
                                 className="btn btn-sm btn-outline-warning me-1"
-                                onClick={() => iniciarEdicionProducto(index)}
+                                onClick={() => iniciarEdicionProducto(prod)}
                               >
                                 <i className="bi bi-pencil"></i>
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-danger"
-                                onClick={() => handleEliminarProducto(index)}
+                                onClick={() => handleEliminarProducto(prod)}
                               >
                                 <i className="bi bi-trash"></i>
                               </button>
@@ -479,10 +511,10 @@ export default function Administrador() {
                     <h5 className="text-info mb-3">
                       <i
                         className={`bi ${
-                          indiceUserEdicion === -1 ? "bi-person-plus" : "bi-pencil-square"
+                          idUserEdicion === null ? "bi-person-plus" : "bi-pencil-square"
                         } me-2`}
                       ></i>
-                      {indiceUserEdicion === -1 ? "Nuevo Usuario" : "Editar Usuario"}
+                      {idUserEdicion === null ? "Nuevo Usuario" : "Editar Usuario"}
                     </h5>
                     <form onSubmit={handleSubmitUsuario}>
                       <div className="mb-2">
@@ -500,14 +532,14 @@ export default function Administrador() {
                         />
                       </div>
                       <div className="mb-2">
-                        <label className="form-label small text-secondary">Nombre *</label>
+                        <label className="form-label small text-secondary">Nombres *</label>
                         <input
                           type="text"
                           className="form-control form-control-sm"
                           required
                           maxLength={50}
-                          value={formUser.nombre}
-                          onChange={(e) => setFormUser({ ...formUser, nombre: e.target.value })}
+                          value={formUser.nombres}
+                          onChange={(e) => setFormUser({ ...formUser, nombres: e.target.value })}
                         />
                       </div>
                       <div className="mb-2">
@@ -533,6 +565,42 @@ export default function Administrador() {
                         />
                       </div>
                       <div className="mb-2">
+                        <label className="form-label small text-secondary">
+                          Contraseña {idUserEdicion === null ? "*" : "(opcional al editar)"}
+                        </label>
+                        <input
+                          type="password"
+                          className="form-control form-control-sm"
+                          required={idUserEdicion === null}
+                          value={formUser.contrasena}
+                          onChange={(e) => setFormUser({ ...formUser, contrasena: e.target.value })}
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="form-label small text-secondary">
+                          Fecha de Nacimiento *
+                        </label>
+                        <input
+                          type="date"
+                          className="form-control form-control-sm"
+                          required
+                          value={formUser.fecha_nacimiento}
+                          onChange={(e) =>
+                            setFormUser({ ...formUser, fecha_nacimiento: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="form-label small text-secondary">Dirección *</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          required
+                          value={formUser.direccion}
+                          onChange={(e) => setFormUser({ ...formUser, direccion: e.target.value })}
+                        />
+                      </div>
+                      <div className="mb-2">
                         <label className="form-label small text-secondary">Tipo de Usuario *</label>
                         <select
                           className="form-select form-select-sm"
@@ -540,9 +608,9 @@ export default function Administrador() {
                           value={formUser.rol}
                           onChange={(e) => setFormUser({ ...formUser, rol: e.target.value })}
                         >
-                          <option value="Cliente">Cliente</option>
-                          <option value="Vendedor">Vendedor</option>
-                          <option value="Administrador">Administrador</option>
+                          <option value="CLIENTE">Cliente</option>
+                          <option value="VENDEDOR">Vendedor</option>
+                          <option value="ADMINISTRADOR">Administrador</option>
                         </select>
                       </div>
                       <div className="d-flex gap-2 mt-3">
@@ -550,9 +618,9 @@ export default function Administrador() {
                           type="submit"
                           className="btn btn-sm btn-info text-white flex-grow-1"
                         >
-                          {indiceUserEdicion === -1 ? "Guardar" : "Actualizar"}
+                          {idUserEdicion === null ? "Guardar" : "Actualizar"}
                         </button>
-                        {indiceUserEdicion !== -1 && (
+                        {idUserEdicion !== null && (
                           <button
                             type="button"
                             className="btn btn-sm btn-secondary"
@@ -579,15 +647,15 @@ export default function Administrador() {
                         </tr>
                       </thead>
                       <tbody>
-                        {usuarios.map((usr, index) => (
-                          <tr key={usr.run + index}>
+                        {usuarios.map((usr) => (
+                          <tr key={usr.id_usuario}>
                             <td className="fw-bold">{usr.run}</td>
                             <td>
-                              {usr.nombre} {usr.apellidos}
+                              {usr.nombres} {usr.apellidos}
                             </td>
                             <td>{usr.correo}</td>
                             <td>
-                              {usr.rol === "Administrador" ? (
+                              {usr.rol?.toUpperCase() === "ADMINISTRADOR" ? (
                                 <span className="badge bg-success">Administrador</span>
                               ) : (
                                 <span className="badge bg-info text-dark">{usr.rol}</span>
@@ -596,13 +664,13 @@ export default function Administrador() {
                             <td className="text-end">
                               <button
                                 className="btn btn-sm btn-outline-warning me-1"
-                                onClick={() => iniciarEdicionUsuario(index)}
+                                onClick={() => iniciarEdicionUsuario(usr)}
                               >
                                 <i className="bi bi-pencil"></i>
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-danger"
-                                onClick={() => handleEliminarUsuario(index)}
+                                onClick={() => handleEliminarUsuario(usr)}
                               >
                                 <i className="bi bi-trash"></i>
                               </button>
@@ -616,7 +684,7 @@ export default function Administrador() {
               </div>
             </div>
 
-            {/* NUEVA PESTAÑA: VENTAS */}
+            {/* Pestaña Ventas */}
             <div className="tab-pane fade" id="tab-ventas" role="tabpanel">
               <div className="card bg-dark border-secondary text-white p-4 shadow-lg">
                 <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
@@ -641,32 +709,40 @@ export default function Administrador() {
                         </tr>
                       </thead>
                       <tbody>
-                        {/* Usamos slice().reverse() para que la venta más nueva quede arriba */}
-                        {ventas.slice().reverse().map((venta) => (
-                          <tr key={venta.id}>
-                            <td className="text-secondary small fw-bold">{venta.id}</td>
-                            <td>{venta.fecha}</td>
-                            <td>{venta.cliente}</td>
-                            <td>
-                              <ul className="mb-0 list-unstyled small text-info">
-                                {/* Validamos venta.productos por si acaso */}
-                                {venta.productos && venta.productos.map((prod, index) => (
-                                  <li key={index}>• {prod.nombre}</li>
-                                ))}
-                              </ul>
-                            </td>
-                            <td className="text-success fw-bold fs-6 text-end">
-                              {formatearPrecio(venta.total)}
-                            </td>
-                          </tr>
-                        ))}
+                        {ventas.slice().reverse().map((venta) => {
+                          const detallesDeEstaVenta = detallesVenta.filter(
+                            (d) => d.venta?.id_venta === venta.id_venta
+                          );
+                          return (
+                            <tr key={venta.id_venta}>
+                              <td className="text-secondary small fw-bold">#{venta.id_venta}</td>
+                              <td>{venta.fecha_venta}</td>
+                              <td>
+                                {venta.usuario
+                                  ? `${venta.usuario.nombres} ${venta.usuario.apellidos}`
+                                  : "-"}
+                              </td>
+                              <td>
+                                <ul className="mb-0 list-unstyled small text-info">
+                                  {detallesDeEstaVenta.map((det) => (
+                                    <li key={det.id_detalle_venta}>
+                                      • {det.producto?.nombre_producto} (x{det.cantidad_producto})
+                                    </li>
+                                  ))}
+                                </ul>
+                              </td>
+                              <td className="text-success fw-bold fs-6 text-end">
+                                {formatearPrecio(venta.total)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                 )}
               </div>
             </div>
-            
           </div>
         </section>
 
@@ -694,9 +770,9 @@ export default function Administrador() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><td>Código</td><td>Obligatorio</td><td>Texto, mínimo 3 caracteres.</td></tr>
                     <tr><td>Nombre</td><td>Obligatorio</td><td>Máximo 100 caracteres.</td></tr>
-                    <tr><td>Precio</td><td>Obligatorio</td><td>Mínimo 0 (0 = FREE), admite decimales.</td></tr>
+                    <tr><td>Descripción</td><td>Obligatorio</td><td>Texto descriptivo del producto.</td></tr>
+                    <tr><td>Precio</td><td>Obligatorio</td><td>Mínimo 0 (0 = FREE), entero.</td></tr>
                     <tr><td>Stock</td><td>Obligatorio</td><td>Mínimo 0, números enteros.</td></tr>
                     <tr><td>Categoría</td><td>Obligatorio</td><td>Selección desde lista (Select).</td></tr>
                   </tbody>
@@ -719,9 +795,9 @@ export default function Administrador() {
                   </thead>
                   <tbody>
                     <tr><td>RUN</td><td>Obligatorio</td><td>7 a 9 car., sin puntos ni guión.</td></tr>
-                    <tr><td>Nombre</td><td>Obligatorio</td><td>Máximo 50 caracteres.</td></tr>
+                    <tr><td>Nombres</td><td>Obligatorio</td><td>Máximo 50 caracteres.</td></tr>
                     <tr><td>Correo</td><td>Obligatorio</td><td>@duoc.cl, @profesor.duoc.cl, @gmail.com.</td></tr>
-                    <tr><td>Tipo Usuario</td><td>Obligatorio</td><td>Administrador, Vendedor, Cliente.</td></tr>
+                    <tr><td>Tipo Usuario</td><td>Obligatorio</td><td>ADMINISTRADOR, VENDEDOR, CLIENTE.</td></tr>
                   </tbody>
                 </table>
               </div>
