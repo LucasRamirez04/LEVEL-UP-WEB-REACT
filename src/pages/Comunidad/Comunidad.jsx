@@ -9,43 +9,8 @@ import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import { eventosComunidad } from "../../data/eventosComunidad";
 import App_alert from "../../components/alerta/alerta";
-
-const DOMINIOS_PERMITIDOS = ["@duoc.cl", "@profesor.duoc.cl", "@gmail.com"];
-const PUNTOS_POR_INSCRIPCION = 50;
-
-// GUARDADO: guarda cada inscripción en el navegador (localStorage)
-function guardarInscripcion(inscripcion) {
-  const textoGuardado = localStorage.getItem("inscripcionesEventos");
-
-  let lista = [];
-  if (textoGuardado !== null) {
-    lista = JSON.parse(textoGuardado);
-  }
-
-  lista.push(inscripcion);
-  localStorage.setItem("inscripcionesEventos", JSON.stringify(lista));
-}
-
-
-
-// PUNTOS LEVELUP: suma puntos a un correo cada vez que se inscribe a un evento
-function sumarPuntos(correo, puntos) {
-  const textoGuardado = localStorage.getItem("puntosLevelUp");
-
-  let puntosPorCorreo = {};
-  if (textoGuardado !== null) {
-    puntosPorCorreo = JSON.parse(textoGuardado);
-  }
-
-  const puntosActuales = puntosPorCorreo[correo] || 0;
-
-  puntosPorCorreo[correo] = puntosActuales + puntos;
-  localStorage.setItem("puntosLevelUp", JSON.stringify(puntosPorCorreo));
-
-  return puntosPorCorreo[correo];
-}
-
-
+import { estaLogueado } from "../../auth/auth";
+import { sumarPuntos } from "../../api/puntosApi";
 
 export default function Comunidad() {
   const casos = Object.values(casosComunidad);
@@ -54,8 +19,6 @@ export default function Comunidad() {
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
 
-  const [nombre, setNombre] = useState("");
-  const [correo, setCorreo] = useState("");
   const [eventoId, setEventoId] = useState("");
 
 
@@ -69,24 +32,12 @@ export default function Comunidad() {
 
 
 
-  // VALIDACIÓN DE FORMULARIOS
+  // INSCRIPCIÓN: los puntos se suman en el backend
   function manejarInscripcion(e) {
     e.preventDefault();
 
-    if (nombre.trim() === "") {
-      mostrarMensaje("El nombre es obligatorio.", "danger");
-      return;
-    }
-    if (nombre.length > 100) {
-      mostrarMensaje("El nombre no puede superar los 100 caracteres.", "danger");
-      return;
-    }
-    if (correo.trim() === "") {
-      mostrarMensaje("El correo es obligatorio.", "danger");
-      return;
-    }
-    if (!DOMINIOS_PERMITIDOS.some((dominio) => correo.trim().endsWith(dominio))) {
-      mostrarMensaje("El correo debe ser @duoc.cl, @profesor.duoc.cl o @gmail.com.", "danger");
+    if (!estaLogueado()) {
+      mostrarMensaje("Debes iniciar sesión para inscribirte.", "danger");
       return;
     }
     if (eventoId === "") {
@@ -94,32 +45,14 @@ export default function Comunidad() {
       return;
     }
 
-
-    
-    const evento = eventosComunidad.find((ev) => ev.id === eventoId);
-
-    guardarInscripcion({
-      nombre: nombre.trim(),
-      correo: correo.trim(),
-      eventoId: eventoId,
-    });
-
-    const totalPuntos = sumarPuntos(correo.trim().toLowerCase(), PUNTOS_POR_INSCRIPCION);
-
-    mostrarMensaje(
-      `¡Quedaste inscrito en ${evento.ciudad}! Ganaste ${PUNTOS_POR_INSCRIPCION} puntos LevelUp (tienes actualmente ${totalPuntos} puntos).`,
-      "success"
-    );
-
-    setNombre("");
-    setCorreo("");
-    setEventoId("");
+    sumarPuntos()
+      .then((total) => {
+        mostrarMensaje("¡Quedaste inscrito! Ahora tienes " + total + " puntos LevelUp.", "success");
+      })
+      .catch(() => {
+        mostrarMensaje("No pudimos inscribirte. Intenta de nuevo.", "danger");
+      });
   }
-
-
-
-
-
 
 
 
@@ -201,29 +134,6 @@ export default function Comunidad() {
             className={`mx-auto p-4 ${styles.tarjetaBlog}`}
             style={{ maxWidth: 500 }}
           >
-
-            <div className="mb-3">
-              <label htmlFor="insc-nombre" className="form-label">Nombre</label>
-              <input
-                id="insc-nombre"
-                type="text"
-                className="form-control"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="insc-correo" className="form-label">Correo</label>
-              <input
-                id="insc-correo"
-                type="email"
-                className="form-control"
-                placeholder="usuario@duoc.cl"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
-              />
-            </div>
 
             <div className="mb-3">
               <label htmlFor="insc-evento" className="form-label">Evento</label>
