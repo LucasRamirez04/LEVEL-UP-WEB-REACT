@@ -2,26 +2,35 @@ import { useMemo, useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import { productosIniciales as listaProductosBase, calcularPrecioFinal, formatearPrecio } from "../../data/productos";
+import { calcularPrecioFinal, formatearPrecio } from "../../data/productos";
 import styles from "./Inicio.module.css";
 import App_alert from "../../components/alerta/alerta";
+import { obtenerProductos } from "../../api/productoApi";
 
 export default function Inicio() {
   const [productos, setProductos] = useState([]);
-  
+  const [cargando, setCargando] = useState(true)
+
   //constantes para implementar alerta
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
 
-  // Carga los productos desde localStorage si existen, o usa la lista base
+  // Carga los productos desde el backend (GET/ api/v1/productos/listar)
   useEffect(() => {
-    const productosGuardados = JSON.parse(localStorage.getItem("productos"));
-    if (productosGuardados && productosGuardados.length > 0) {
-      setProductos(productosGuardados);
-    } else {
-      setProductos(listaProductosBase);
-    }
+    const cargarProductos = async () => {
+      try {
+        const data = await obtenerProductos();
+        setProductos(data);
+      } catch {
+        setMostrarAlerta(true);
+        setMensajeAlerta("No se pudieron cargar los productos")
+        setTipoAlerta("danger")
+      } finally {
+        setCargando(false)
+      }
+    };
+    cargarProductos();
   }, []);
 
   // Top 3 ofertas con mayor descuento
@@ -32,56 +41,56 @@ export default function Inicio() {
       .slice(0, 3);
   }, [productos]);
 
-const agregarAlCarrito = (producto, precioFinal) => {
-  // 1. Obtener los productos que ya están en el carrito
-  const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
+  const agregarAlCarrito = (producto, precioFinal) => {
+    // 1. Obtener los productos que ya están en el carrito
+    const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
 
-  // 2. Contar cuántas veces se ha agregado ESTE producto específico al carrito
-  const cantidadEnCarrito = carritoActual.filter(
-    (item) => item.codigo === producto.codigo
-  ).length;
+    // 2. Contar cuántas veces se ha agregado ESTE producto específico al carrito
+    const cantidadEnCarrito = carritoActual.filter(
+      (item) => item.codigo === producto.codigo
+    ).length;
 
-  // 3. Validar si supera el stock del producto
-  if (cantidadEnCarrito >= producto.stock) {
+    // 3. Validar si supera el stock del producto
+    if (cantidadEnCarrito >= producto.stock) {
+      setMostrarAlerta(true);
+      setMensajeAlerta(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
+      setTipoAlerta("danger")
+      //alert(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
+      return;
+    }
+
+    // 4. Si hay stock disponible, creamos el item y lo guardamos
+    const itemAAgregar = {
+      codigo: producto.codigo,
+      nombre: producto.nombre,
+      precio: precioFinal,
+      imagen: producto.imagen,
+    };
+
+    const nuevoCarrito = [...carritoActual, itemAAgregar];
+    localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+
+    // 5. Notificar al Navbar para actualizar el badge de contador
+    window.dispatchEvent(new Event("storage"));
+
     setMostrarAlerta(true);
-    setMensajeAlerta(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
-    setTipoAlerta("danger")
-    //alert(`No puedes agregar más unidades. El stock máximo disponible para "${producto.nombre}" es de ${producto.stock}.`);
-    return;
-  }
-
-  // 4. Si hay stock disponible, creamos el item y lo guardamos
-  const itemAAgregar = {
-    codigo: producto.codigo,
-    nombre: producto.nombre,
-    precio: precioFinal,
-    imagen: producto.imagen,
+    setMensajeAlerta(`"${producto.nombre}" agregado al carrito.`);
+    setTipoAlerta("success")
+    //alert(`"${producto.nombre}" agregado al carrito.`);
   };
-
-  const nuevoCarrito = [...carritoActual, itemAAgregar];
-  localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
-
-  // 5. Notificar al Navbar para actualizar el badge de contador
-  window.dispatchEvent(new Event("storage"));
-  
-  setMostrarAlerta(true);
-  setMensajeAlerta(`"${producto.nombre}" agregado al carrito.`);
-  setTipoAlerta("success")
-  //alert(`"${producto.nombre}" agregado al carrito.`);
-};
 
   return (
     <>
       <Navbar />
       <CarritoOffcanvas />
-    <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
-      <App_alert
-        mostrarAlert={mostrarAlerta}
-        cerrarAlert={() => setMostrarAlerta(false)}
-        variant={tipoAlerta}
-        msgAlert={mensajeAlerta}
-      />
-    </div>
+      <div style={{ position: "fixed", top: "90px", right: "20px", zIndex: 1060, maxWidth: "400px" }}>
+        <App_alert
+          mostrarAlert={mostrarAlerta}
+          cerrarAlert={() => setMostrarAlerta(false)}
+          variant={tipoAlerta}
+          msgAlert={mensajeAlerta}
+        />
+      </div>
       <main className="flex-grow-1 contenedor-principal mt-5 pt-4">
         <section id="sec-ofertas" className="py-5">
           <div className="container">
@@ -92,52 +101,61 @@ const agregarAlCarrito = (producto, precioFinal) => {
               OFERTAS ESPECIALES <span className={styles.textoNeonVerde}>Top Drops</span>
             </h2>
 
-            <div className="row g-4">
-              {ofertasEspeciales.map((producto) => {
-                const precioFinal = calcularPrecioFinal(producto);
-                return (
-                  <div className="col-12 col-md-4" key={producto.codigo}>
-                    <div className="card h-100 bg-dark text-white border-secondary position-relative overflow-hidden">
-                      <span
-                        className="badge position-absolute top-0 end-0 m-2 px-2 py-1"
-                        style={{ backgroundColor: "#39FF14", color: "#000000", fontWeight: "bold" }}
-                      >
-                        -{producto.descuento}% OFF
-                      </span>
-                      <img
-                        src={producto.imagen}
-                        alt={producto.nombre}
-                        className="card-img-top"
-                        style={{
-                          height: 250,
-                          objectFit: "contain",
-                          backgroundColor: "#111",
-                          padding: 10,
-                        }}
-                      />
-                      <div className="card-body d-flex flex-column">
-                        <h5 className="card-title">{producto.nombre}</h5>
-                        <div className="my-2">
-                          <small className="text-decoration-line-through text-secondary me-2">
-                            {formatearPrecio(producto.precio)}
-                          </small>
-                          <span className="fw-bold fs-5" style={{ color: "#39FF14" }}>
-                            {formatearPrecio(precioFinal)}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className={`btn mt-auto ${styles.botonAgregar}`}
-                          onClick={() => agregarAlCarrito(producto, precioFinal)}
+            {cargando ? (
+              <p className="text-secondary">Cargando ofertas...</p>
+            ) : ofertasEspeciales.length === 0 ? (
+              <p className="text-secondary">No hay ofertas disponibles en este momento</p>
+            ) : (
+
+
+              <div className="row g-4">
+                {ofertasEspeciales.map((producto) => {
+                  const precioFinal = calcularPrecioFinal(producto);
+                  return (
+                    <div className="col-12 col-md-4" key={producto.codigo}>
+                      <div className="card h-100 bg-dark text-white border-secondary position-relative overflow-hidden">
+                        <span
+                          className="badge position-absolute top-0 end-0 m-2 px-2 py-1"
+                          style={{ backgroundColor: "#39FF14", color: "#000000", fontWeight: "bold" }}
                         >
-                          Añadir al Carrito
-                        </button>
+                          -{producto.descuento}% OFF
+                        </span>
+                        <img
+                          src={producto.imagen}
+                          alt={producto.nombre}
+                          className="card-img-top"
+                          style={{
+                            height: 250,
+                            objectFit: "contain",
+                            backgroundColor: "#111",
+                            padding: 10,
+                          }}
+                        />
+                        <div className="card-body d-flex flex-column">
+                          <h5 className="card-title">{producto.nombre}</h5>
+                          <div className="my-2">
+                            <small className="text-decoration-line-through text-secondary me-2">
+                              {formatearPrecio(producto.precio)}
+                            </small>
+                            <span className="fw-bold fs-5" style={{ color: "#39FF14" }}>
+                              {formatearPrecio(precioFinal)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className={`btn mt-auto ${styles.botonAgregar}`}
+                            onClick={() => agregarAlCarrito(producto, precioFinal)}
+                          >
+                            Añadir al Carrito
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
