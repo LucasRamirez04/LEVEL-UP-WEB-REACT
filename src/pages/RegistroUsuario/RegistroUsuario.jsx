@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import { usuarioAdminInicial } from "../../data/productos";
+import { registro } from "../../api/authApi";
 import styles from "./RegistroUsuario.module.css";
 import App_alert from "../../components/alerta/alerta";
 
@@ -22,6 +22,7 @@ export default function RegistroUsuario() {
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
+  const [cargando, setCargando] = useState(false);
 
   function mostrarMensaje(mensaje, tipo = "danger") {
     setMensajeAlerta(mensaje);
@@ -55,7 +56,7 @@ export default function RegistroUsuario() {
     }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     if (form.run.trim() === "") return mostrarMensaje("El RUN es requerido.", "danger");
@@ -101,35 +102,33 @@ export default function RegistroUsuario() {
     if (form.direccion.trim().length > 300)
       return mostrarMensaje("La dirección no puede tener más de 300 caracteres.", "danger");
 
-    // Obtener lista actual de usuarios desde localStorage
-    const usuariosRegistrados =
-      JSON.parse(localStorage.getItem("usuarios")) || usuarioAdminInicial;
-
-    // Verificar que no exista un usuario con el mismo RUN o correo
-    const runExiste = usuariosRegistrados.some((u) => u.run === form.run.trim());
-    if (runExiste) {
-      return mostrarMensaje("Ya existe un usuario registrado con este RUN.", "danger");
-    }
-
-    // Crear el nuevo usuario
+    // Armar el payload con los campos que espera UsuarioModel en el backend
     const nuevoUsuario = {
       run: form.run.trim(),
-      nombre: form.nombre.trim(),
+      nombres: form.nombre.trim(),
       apellidos: form.apellidos.trim(),
       correo: correoLimpio,
+      contrasena: form.clave,
+      fecha_nacimiento: form.fechaNacimiento,
+      direccion: `${form.direccion.trim()}, ${form.comuna}, ${form.region}`,
       rol: "Cliente",
-      clave: form.clave,
-      region: form.region,
-      comuna: form.comuna,
-      direccion: form.direccion.trim(),
     };
 
-    // Guardar en localStorage
-    const nuevaLista = [...usuariosRegistrados, nuevoUsuario];
-    localStorage.setItem("usuarios", JSON.stringify(nuevaLista));
-
-    mostrarMensaje("¡Registro exitoso! Ya puedes iniciar sesión.", "success");
-    navigate("/login");
+    setCargando(true);
+    try {
+      await registro(nuevoUsuario);
+      mostrarMensaje("¡Registro exitoso! Ya puedes iniciar sesión.", "success");
+      navigate("/login");
+    } catch (error) {
+      mostrarMensaje(
+        error?.message === "Error 400"
+          ? "El correo ya se encuentra registrado."
+          : "No se pudo conectar con el servidor. Intenta nuevamente.",
+        "danger"
+      );
+    } finally {
+      setCargando(false);
+    }
   }
 
   return (
@@ -310,8 +309,9 @@ export default function RegistroUsuario() {
                   type="submit"
                   className="btn btn-primary"
                   style={{ fontFamily: "'Orbitron', sans-serif" }}
+                  disabled={cargando}
                 >
-                  Registrar Cuenta
+                  {cargando ? "Registrando..." : "Registrar Cuenta"}
                 </button>
               </div>
             </form>
