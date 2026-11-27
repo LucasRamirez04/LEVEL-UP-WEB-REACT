@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { formatearPrecio } from "../../data/productos";
 import styles from "./CarritoOffcanvas.module.css";
 import { useNavigate } from "react-router-dom";
+import { estaLogueado } from "../../auth/auth";
 
 export default function CarritoOffcanvas() {
   const [carrito, setCarrito] = useState([]);
@@ -42,6 +43,14 @@ export default function CarritoOffcanvas() {
     setCarrito([]);
     localStorage.removeItem("carrito");
     window.dispatchEvent(new Event("storage"));
+  };
+
+  const handleContinuarPago = () => {
+    if (!estaLogueado()){
+      navigate("/login");
+      return
+    }
+    navigate("/pago")
   };
 
   return (
@@ -105,7 +114,7 @@ export default function CarritoOffcanvas() {
         <div className="d-flex flex-column gap-2">
           <button 
             className={`btn w-100 py-2 ${styles.botonBuscarNeon}`}
-            onClick={() => navigate("/pago")}
+            onClick={handleContinuarPago}
             data-bs-dismiss="offcanvas" 
             disabled={carrito.length === 0}
           >
