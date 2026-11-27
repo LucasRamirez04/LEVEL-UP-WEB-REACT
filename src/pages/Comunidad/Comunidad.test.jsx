@@ -25,7 +25,7 @@ test("Comprobar que se muestran los 2 casos curiosos", () => {
   expect(botones).toHaveLength(2);
 });
 
-test("Comprobar que el formulario avisa cuando se envía vacío", () => {
+test("Comprobar que el formulario pide iniciar sesión si no hay sesión", () => {
   render(
     <MemoryRouter>
       <Comunidad />
@@ -34,5 +34,21 @@ test("Comprobar que el formulario avisa cuando se envía vacío", () => {
 
   fireEvent.click(screen.getByRole("button", { name: /inscribirme/i }));
 
-  expect(screen.getByText("El nombre es obligatorio.")).toBeInTheDocument();
+  expect(screen.getByText("Debes iniciar sesión para inscribirte.")).toBeInTheDocument();
+});
+
+test("Comprobar que el formulario avisa cuando no se elige un evento", () => {
+  localStorage.setItem("token_levelup", "token-de-prueba");
+
+  render(
+    <MemoryRouter>
+      <Comunidad />
+    </MemoryRouter>
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: /inscribirme/i }));
+
+  expect(screen.getByText("Debes elegir un evento.")).toBeInTheDocument();
+
+  localStorage.clear();
 });
