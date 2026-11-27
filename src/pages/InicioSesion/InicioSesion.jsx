@@ -3,13 +3,15 @@ import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
-import { usuarioAdminInicial } from "../../data/productos";
+import { login } from "../../api/authApi";
+import { cerrarSesion, guardarToken, guardarUsuario } from "../../auth/auth";
 import styles from "./InicioSesion.module.css";
 import App_alert from "../../components/alerta/alerta";
 
 export default function InicioSesion() {
   const [correo, setCorreo] = useState("");
   const [clave, setClave] = useState("");
+  const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
 
   // Estados de alerta
@@ -17,7 +19,7 @@ export default function InicioSesion() {
   const [mensajeAlerta, setMensajeAlerta] = useState("");
   const [tipoAlerta, setTipoAlerta] = useState("");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const correoLimpio = correo.trim().toLowerCase();
@@ -36,32 +38,36 @@ export default function InicioSesion() {
       return;
     }
 
-    // Obtiene usuarios registrados de localStorage o el admin por defecto
-    const usuariosRegistrados =
-      JSON.parse(localStorage.getItem("usuarios")) || usuarioAdminInicial;
+    setCargando(true);
+    try {
+      // Limpia una eventual sesión previa para evitar redirección 401 en client.js ante credenciales inválidas
+      cerrarSesion();
+      const data = await login(correoLimpio, claveLimpia);
 
-    // Busca coincidencia de correo y clave
-    const usuarioEncontrado = usuariosRegistrados.find(
-      (u) =>
-        u.correo.toLowerCase() === correoLimpio &&
-        (u.clave ? u.clave === claveLimpia : true)
-    );
-
-    if (usuarioEncontrado) {
-      // Guarda la sesión activa en localStorage
-      localStorage.setItem("usuarioActivo", JSON.stringify(usuarioEncontrado));
+      guardarToken(data.token);
+      guardarUsuario({
+        nombre: data.nombres,
+        rol: data.rol,
+        correo: correoLimpio,
+      });
 
       // Notifica al Navbar para actualizar nombre y botón de salida
       window.dispatchEvent(new Event("storage"));
 
       setMostrarAlerta(true);
-      setMensajeAlerta("¡Bienvenido " + usuarioEncontrado.nombre + "!");
+      setMensajeAlerta("¡Bienvenido " + (data.nombres || correoLimpio) + "!");
       setTipoAlerta("success");
       navigate("/");
-    } else {
+    } catch (error) {
       setMostrarAlerta(true);
-      setMensajeAlerta("Correo o contraseña incorrectos.");
+      setMensajeAlerta(
+        error?.message === "Error 401"
+          ? "Correo o contraseña incorrectos."
+          : "No se pudo conectar con el servidor. Intenta nuevamente."
+      );
       setTipoAlerta("danger");
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -135,8 +141,9 @@ export default function InicioSesion() {
                   type="submit"
                   className="btn btn-primary"
                   style={{ fontFamily: "'Orbitron', sans-serif" }}
+                  disabled={cargando}
                 >
-                  Ingresar
+                  {cargando ? "Ingresando..." : "Ingresar"}
                 </button>
               </div>
 
