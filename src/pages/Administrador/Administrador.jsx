@@ -6,8 +6,8 @@ import { formatearPrecio } from "../../data/productos";
 import { obtenerProductos, agregarProducto, actualizarProducto, eliminarProducto,} from "../../api/productoApi";
 import { obtenerCategorias } from "../../api/categoriaApi";
 import {listarUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario,} from "../../api/usuariosApi";
-import { obtenerVentas } from "../../api/ventasApi";
-import { obtenerDetallesVenta } from "../../api/detalleVentaApi";
+import { obtenerVentas } from "../../api/ventaApi";
+import { obtenerDetallesVenta } from "../../api/detalleVentasApi";
 import styles from "./Administrador.module.css";
 
 const PRODUCTO_VACIO = {
