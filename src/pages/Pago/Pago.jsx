@@ -14,6 +14,10 @@ import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import CarritoOffcanvas from "../../components/CarritoOffcanvas/CarritoOffcanvas";
 import App_alert from "../../components/alerta/alerta";
+import { getUsuario } from "../../auth/auth";
+import { agregarVenta } from "../../api/ventaApi";
+import { agregarDetalleVenta } from "../../api/detalleVentasApi";
+import { agregarBoleta } from "../../api/boletasApi";
 import { formatearPrecio } from "../../data/productos";
 import styles from "./Pago.module.css";
 
@@ -22,6 +26,7 @@ export default function Pago() {
   const [metodoPago, setMetodoPago] = useState("credito");
   const [estadoSimulacion, setEstadoSimulacion] = useState("exito"); 
   const [resultadoPago, setResultadoPago] = useState(null); 
+  const [procesando, setProcesando] = useState(false);
 
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState("");
@@ -34,42 +39,102 @@ export default function Pago() {
 
   const totalPagar = carrito.reduce((acc, item) => acc + (item.precio || 0), 0);
 
+  // ALERTA REUTILIZABLE
+  function mostrarMensaje(mensaje, tipo) {
+    setMensajeAlerta(mensaje);
+    setTipoAlerta(tipo);
+    setMostrarAlerta(true);
+  }
+
+  // Agrupa el carrito: si un producto está 3 veces, queda 1 vez con cantidad 3
+  function agruparCarrito() {
+    const productos = [];
+
+    carrito.forEach((item) => {
+      const yaEsta = productos.find((p) => p.codigo === item.codigo);
+      if (yaEsta) {
+        yaEsta.cantidad = yaEsta.cantidad + 1;
+      } else {
+        productos.push({ codigo: item.codigo, cantidad: 1 });
+      }
+    });
+
+    return productos;
+  }
+
+  // Guarda un detalle por cada producto distinto del carrito
+  function guardarDetalles(idVenta) {
+    const peticiones = agruparCarrito().map((producto) => {
+      return agregarDetalleVenta({
+        venta: { id_venta: idVenta },
+        producto: { codigo_producto: Number(producto.codigo) },
+        cantidad_producto: producto.cantidad,
+      });
+    });
+
+    // Promise.all espera a que todas las peticiones terminen
+    return Promise.all(peticiones);
+  }
+
   function handleProcesarPago(e) {
     e.preventDefault();
 
-    // 1. Capturamos los datos del formulario (específicamente el correo)
-    const formData = new FormData(e.target);
-    const correoCliente = formData.get("correo") || "Cliente";
-
-    if (estadoSimulacion === "exito") {
-      // 2. REGISTRAR LA VENTA EN LOCALSTORAGE
-      const ventasGuardadas = JSON.parse(localStorage.getItem("ventas")) || [];
-      const nuevaVenta = {
-        id: "VT-" + Date.now(), 
-        fecha: new Date().toLocaleString(),
-        cliente: correoCliente,
-        total: totalPagar,
-        productos: carrito // Guardamos el detalle completo del carrito
-      };
-      
-      ventasGuardadas.push(nuevaVenta);
-      localStorage.setItem("ventas", JSON.stringify(ventasGuardadas));
-
-      // 3. Vaciar el carrito y mostrar éxito
-      localStorage.setItem("carrito", JSON.stringify([]));
-      window.dispatchEvent(new Event("storage"));
-      setCarrito([]);
-      setResultadoPago("aprobado");
-
-      setMostrarAlerta(true);
-      setMensajeAlerta("¡Pago Aprobado con Éxito! Tu orden ha sido procesada correctamente.");
-      setTipoAlerta("success");
-    } else {
+    // Pago rechazado: no se registra nada en el backend
+    if (estadoSimulacion !== "exito") {
       setResultadoPago("rechazado");
-      setMostrarAlerta(true);
-      setMensajeAlerta("Pago Rechazado. Fondos insuficientes o tarjeta denegada.");
-      setTipoAlerta("danger");
+      mostrarMensaje("Pago Rechazado. Fondos insuficientes o tarjeta denegada.", "danger");
+      return;
     }
+
+    // Para registrar la venta hay que tener la sesión iniciada
+    const usuario = getUsuario();
+    if (!usuario || !usuario.id) {
+      mostrarMensaje("Debes iniciar sesión para pagar.", "danger");
+      return;
+    }
+
+    // Datos de la venta (la calle y la comuna se leen del formulario por su name)
+    const fecha = new Date().toLocaleString();
+    const direccion = e.target.elements.calle.value + ", " + e.target.elements.comuna.value;
+    const venta = {
+      usuario: { id_usuario: usuario.id },
+      fecha_venta: fecha,
+      total: totalPagar,
+      direccion_envio: direccion,
+    };
+
+    let idVenta = 0;
+    setProcesando(true);
+
+    // Paso 1: guardar la venta
+    agregarVenta(venta)
+      .then((ventaGuardada) => {
+        idVenta = ventaGuardada.id_venta;
+        // Paso 2: guardar los detalles (se espera a que se guarden todos)
+        return guardarDetalles(idVenta);
+      })
+      .then(() => {
+        // Paso 3: guardar la boleta de esa misma venta
+        return agregarBoleta({
+          venta: { id_venta: idVenta },
+          fecha_emision: fecha,
+          metodo_pago: metodoPago,
+        });
+      })
+      .then(() => {
+        // Paso 4: todo salió bien, se vacía el carrito y se muestra el éxito
+        localStorage.setItem("carrito", JSON.stringify([]));
+        window.dispatchEvent(new Event("storage"));
+        setCarrito([]);
+        setResultadoPago("aprobado");
+        mostrarMensaje("¡Pago Aprobado con Éxito! Tu orden ha sido procesada correctamente.", "success");
+      })
+      .catch(() => {
+        mostrarMensaje("No pudimos registrar tu compra. Intenta de nuevo.", "danger");
+      })
+      .finally(() => {
+        setProcesando(false);
+      });
   }
 
   function handleReintentar() {
@@ -252,7 +317,7 @@ export default function Pago() {
                         <Col md={6}>
                           <Form.Group>
                             <Form.Label className="small text-white-50">Calle <span className="text-danger">*</span></Form.Label>
-                            <Form.Control type="text" size="sm" required />
+                            <Form.Control type="text" name="calle" size="sm" required />
                           </Form.Group>
                         </Col>
                         <Col md={6}>
@@ -277,7 +342,7 @@ export default function Pago() {
                         <Col md={6}>
                           <Form.Group>
                             <Form.Label className="small text-white-50">Comuna <span className="text-danger">*</span></Form.Label>
-                            <Form.Select size="sm" required defaultValue="Cerrillos">
+                            <Form.Select name="comuna" size="sm" required defaultValue="Cerrillos">
                               <option value="">Seleccione...</option>
                               <option value="Cerrillos">Cerrillos</option>
                               <option value="Santiago">Santiago</option>
@@ -297,8 +362,8 @@ export default function Pago() {
                     </div>
 
                     <div className="mt-4 border-top border-secondary pt-4">
-                      <Button type="submit" variant="success" className="w-100 fw-bold py-3 fs-5" disabled={carrito.length === 0}>
-                        {carrito.length === 0 ? "Carrito Vacío" : `Confirmar Pago por ${formatearPrecio(totalPagar)}`}
+                      <Button type="submit" variant="success" className="w-100 fw-bold py-3 fs-5" disabled={carrito.length === 0 || procesando}>
+                        {carrito.length === 0 ? "Carrito Vacío" : procesando ? "Procesando..." : `Confirmar Pago por ${formatearPrecio(totalPagar)}`}
                       </Button>
                     </div>
                   </Card>

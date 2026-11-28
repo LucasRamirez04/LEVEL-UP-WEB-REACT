@@ -45,10 +45,11 @@ export default function InicioSesion() {
       const data = await login(correoLimpio, claveLimpia);
 
       guardarToken(data.token);
-      guardarUsuario({
+            guardarUsuario({
         nombre: data.nombres,
         rol: data.rol,
         correo: correoLimpio,
+        id: data.id_usuario,
       });
 
       // Notifica al Navbar para actualizar nombre y botón de salida
